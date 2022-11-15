@@ -2,11 +2,11 @@ from pymodbus.client import ModbusTcpClient
 
 import constants
 import common_helpers
-
+# USE PYTHON 3.8.0!!!!!
 
 def automated_routine():
-    protos_x = ModbusTcpClient(constants.PROTOS_X_HOST)
-    common_helpers.initializations(protos_x)
+    protos_x = common_helpers.tcp_client_initialization(constants.PROTOS_X_HOST)
+
     
     location, speed = common_helpers.collect_params()
 

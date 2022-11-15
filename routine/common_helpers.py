@@ -1,10 +1,17 @@
+from pymodbus.client import ModbusTcpClient
+from cpppo.server.enip import client
+from cpppo.server.enip.get_attribute import attribute_operations
 import time
 
 import constants
 
+# REMINDER TO HAVE FEATURE TO JOG THE CONVEYOR SO THAT THE BELT IS AT THE RIGHT POSITION!!!
+# BASICALLY PUT A HOMING FUNCTION FOR MANUAL TESTS AT BEGINNING OF PROCEDURE
+
 # Split this into separate files, have classes for conveyors?
 
-def initializations(protos_x):
+def tcp_client_initialization(host):
+    protos_x = ModbusTcpClient(host)
     print('Connecting to Protos X...')
     while(not protos_x.connect()):
         print('No available connections.')
@@ -12,6 +19,16 @@ def initializations(protos_x):
             pass
         print('Attempting to connect...')
     print('Connected.')
+    return protos_x
+
+def enip_send_command(host, tags):
+    with client.connector(host) as conn:
+        for index, descr, op, reply, status, value in conn.synchronous(
+            operations=attribute_operations(
+                tags, route_path=[], send_path='')):
+            print(": %20s: %s" % (descr, value))
+            return value
+
 
 def dummy_arm_routine(location, speed):
     print('Running arm routine')
@@ -19,9 +36,13 @@ def dummy_arm_routine(location, speed):
     pass
 
 def stop_long_conveyor():
+    enip_send_command(constants.SERVO_DRIVE_HOST,constants.STOP_SERVO_PATH)
     pass
 
-def run_long_conveyor():
+def run_long_conveyor(rpm):
+    enip_send_command(constants.SERVO_DRIVE_HOST, constants.SET_PATH_1_DEF)
+    enip_send_command(constants.SERVO_DRIVE_HOST, constants.SET_PATH_1_DATA+rpm)
+    enip_send_command(constants.SERVO_DRIVE_HOST, constants.TRIGGER_PATH_1)
     print('Running long conveyor forwards.')
 
 def run_short_conveyor():
@@ -62,12 +83,22 @@ def collect_params():
     speed = input('Speed: ')
     return location, speed
 
+# Start bit is LSB (index starts at 0), end bit is MSB
+def write_to_bits(bitfield, start_bit, num_bits, value):
+    if(2 ** num_bits - 1 >= value):
+        temp = value << start_bit
+        bitfield |= temp
+        print(bin(bitfield))
+    else:
+        print("Error writing value to register. Value too large.")
+
 def alignment_routine(protos_x, location, speed, cycles:int =1):
     start_time = time.time()
-
+    
     while cycles > 0:
         # Requires prox sensors to be wired to consecutive addresses
         if(check_prox_sensors(protos_x)):
+            enip_send_command(constants.SERVO_DRIVE_HOST,constants.STOP_SERVO_PATH)
             dummy_arm_routine(location, speed) # this can be shared between the manual and automated tests, find a way to import it
             cycles -= 1
             start_time = time.time()
