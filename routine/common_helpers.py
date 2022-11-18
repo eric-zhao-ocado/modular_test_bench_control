@@ -92,8 +92,10 @@ def write_to_bits(bitfield, start_bit, num_bits, value):
     else:
         print("Error writing value to register. Value too large.")
 
+
+
 def alignment_routine(protos_x, location, speed, cycles:int =1):
-    start_time = time.time()
+    start_time = time.perf_counter()
     
     while cycles > 0:
         # Requires prox sensors to be wired to consecutive addresses
@@ -101,9 +103,9 @@ def alignment_routine(protos_x, location, speed, cycles:int =1):
             enip_send_command(constants.SERVO_DRIVE_HOST,constants.STOP_SERVO_PATH)
             dummy_arm_routine(location, speed) # this can be shared between the manual and automated tests, find a way to import it
             cycles -= 1
-            start_time = time.time()
-        elif time.time()-start_time < constants.MAX_TIME:
+            start_time = time.perf_counter()
+        elif time.perf_counter()-start_time < constants.MAX_TIME:
             run_long_conveyor()
         else:
             reset_parcel()
-            start_time = time.time()
+            start_time = time.perf_counter()

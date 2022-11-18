@@ -1,3 +1,5 @@
+import sure_servo_2_control as sv2c
+
 class ServoConveyor:
     def __init__(self, conveyor_length, belt_length, speed, rpm_max, pulley_rad):
         self.conveyor_length = conveyor_length
