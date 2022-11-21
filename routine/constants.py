@@ -57,6 +57,10 @@ HOMING_ATTR = 0
 MAX_TYPE_VALUE = 11
 # Path definitions start at P6.002
 FIRST_PATH_ATTR = 2
+CMD_ABS = 0
+CMD_REL = 1
+CMD_INC = 2
+CMD_CAP = 3
 # RPM has a unit of 0.1 rpm, so this is really 933 rpm
 # Do not exceed max speed that conveyor is designed for
-MAX_RPM = 9330
+DORNER_PRECISION_2200_MAX_RPM = 933

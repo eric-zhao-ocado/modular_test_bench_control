@@ -3,8 +3,8 @@ from cpppo.server.enip import client
 from cpppo.server.enip.get_attribute import attribute_operations
 import time
 
-import constants
-
+import constants as c
+import conveyors
 # REMINDER TO HAVE FEATURE TO JOG THE CONVEYOR SO THAT THE BELT IS AT THE RIGHT POSITION!!!
 # BASICALLY PUT A HOMING FUNCTION FOR MANUAL TESTS AT BEGINNING OF PROCEDURE
 
@@ -36,13 +36,13 @@ def dummy_arm_routine(location, speed):
     pass
 
 def stop_long_conveyor():
-    enip_send_command(constants.SERVO_DRIVE_HOST,constants.STOP_SERVO_PATH)
+    enip_send_command(c.SERVO_DRIVE_HOST,c.STOP_SERVO_PATH)
     pass
 
 def run_long_conveyor(rpm):
-    enip_send_command(constants.SERVO_DRIVE_HOST, constants.SET_PATH_1_DEF)
-    enip_send_command(constants.SERVO_DRIVE_HOST, constants.SET_PATH_1_DATA+rpm)
-    enip_send_command(constants.SERVO_DRIVE_HOST, constants.TRIGGER_PATH_1)
+    enip_send_command(c.SERVO_DRIVE_HOST, c.SET_PATH_1_DEF)
+    enip_send_command(c.SERVO_DRIVE_HOST, c.SET_PATH_1_DATA+rpm)
+    enip_send_command(c.SERVO_DRIVE_HOST, c.TRIGGER_PATH_1)
     print('Running long conveyor forwards.')
 
 def run_short_conveyor():
@@ -57,7 +57,7 @@ def check_ready():
         pass
 
 def check_prox_sensors(protos_x):
-    data = protos_x.read_discrete_inputs(constants.PROX_1_ADDR, 2)
+    data = protos_x.read_discrete_inputs(c.PROX_1_ADDR, 2)
     prox_1_sense = data.bits[0]
     prox_2_sense = data.bits[1]
 
@@ -94,18 +94,22 @@ def write_to_bits(bitfield, start_bit, num_bits, value):
 
 
 
-def alignment_routine(protos_x, location, speed, cycles:int =1):
+def alignment_routine(pick_conveyor:conveyors.EnipServoConveyor, protos_x, location, speed, cycles:int =1):
     start_time = time.perf_counter()
+    pick_conveyor.forward_constant.trigger_path()
     
     while cycles > 0:
         # Requires prox sensors to be wired to consecutive addresses
+        
         if(check_prox_sensors(protos_x)):
-            enip_send_command(constants.SERVO_DRIVE_HOST,constants.STOP_SERVO_PATH)
+            pick_conveyor.stop.trigger_path()
             dummy_arm_routine(location, speed) # this can be shared between the manual and automated tests, find a way to import it
             cycles -= 1
+            time.sleep(5)
             start_time = time.perf_counter()
-        elif time.perf_counter()-start_time < constants.MAX_TIME:
-            run_long_conveyor()
+            pick_conveyor.forward_constant.trigger_path()
+        elif time.perf_counter()-start_time < 5:
+            pass
         else:
-            reset_parcel()
+            pick_conveyor.backwards_one_length.trigger_path()
             start_time = time.perf_counter()

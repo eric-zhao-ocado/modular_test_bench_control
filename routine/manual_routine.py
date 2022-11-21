@@ -1,28 +1,20 @@
 import time
 
-import constants
+import constants as c
 import common_helpers
-
-def return_parcels():
-    common_helpers.enip_send_command(constants.SERVO_DRIVE_HOST,constants.STOP_SERVO_PATH)
-    print('Running conveyor 1/3 backwards')
-    
-    time.sleep(1)
-
+import conveyors
 
 def manual_routine():
-    protos_x = common_helpers.tcp_client_initialization(constants.PROTOS_X_HOST)
-
+    pick_conveyor = conveyors.EnipServoConveyor(1400, 113000, 121, c.SERVO_DRIVE_HOST)
     location, speed = common_helpers.collect_params()
+
     common_helpers.check_ready()
-    conveyor_rpm = int(input("Default Conveyor RPM: ")) * 10
-    common_helpers.run_short_conveyor(conveyor_rpm)
-
-
-    common_helpers.alignment_routine(protos_x, location, speed)
-
-    time.sleep(constants.MANUAL_WAIT_TIME)
-    return_parcels()
+    pick_conveyor.servo.send_command(300, 4, 7, 1)
+    pick_conveyor.forward_two_third_length.trigger_path()
+    time.sleep(5)
+    pick_conveyor.backwards_one_third_length.trigger_path()
+    time.sleep(5)
+    pick_conveyor.go_home.trigger_path()
 
     print("Manual routine finished.")
 
