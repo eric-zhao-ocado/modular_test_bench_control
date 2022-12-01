@@ -3,9 +3,9 @@ import atexit
 
 from cpppo.server.enip import client
 from cpppo.server.enip.get_attribute import attribute_operations
-import common_helpers
 
-
+x = '192.168.1.10'.split('.')
+print(x)
 class Test():
     def __init__(self):
         print("initiiailaized")

@@ -15,7 +15,6 @@ import atexit
 from cpppo.server.enip import client
 from cpppo.server.enip.get_attribute import attribute_operations
 
-import test_bench_constants as tb_const
 import sure_servo_2_constants as sv2_const
 
 
@@ -219,7 +218,7 @@ class Sv2Servo(EnipServer):
         return self.send_command(
             sv2_const.SERVO_DATA_OBJ_300,
             sv2_const.DIAGNOSIS_INST_4,
-            sv2_const.DIGITAL_INPUT_ATTR
+            sv2_const.DIGITAL_INPUT_ATTR_7
             )
 
     def enable_servo(self):
@@ -231,7 +230,7 @@ class Sv2Servo(EnipServer):
         self.send_command(
             sv2_const.SERVO_DATA_OBJ_300,
             sv2_const.DIAGNOSIS_INST_4,
-            sv2_const.DIGITAL_INPUT_ATTR,
+            sv2_const.DIGITAL_INPUT_ATTR_7,
             digital_input
             )
 
@@ -244,7 +243,7 @@ class Sv2Servo(EnipServer):
         self.send_command(
             sv2_const.SERVO_DATA_OBJ_300,
             sv2_const.DIAGNOSIS_INST_4,
-            sv2_const.DIGITAL_INPUT_ATTR,
+            sv2_const.DIGITAL_INPUT_ATTR_7,
             digital_input
             )
 
@@ -268,6 +267,138 @@ class Sv2Servo(EnipServer):
             sv2_const.TRIG_POS_ATTR,
             sv2_const.HOMING_ATTR
             )
+
+    def change_ip_addr(self, ip_addr):
+        """
+        Changes the IP address of the servo drive.
+
+        Args:
+            ip_addr: String containing new address in form of
+                     '###.###.###.###'
+        """
+        ip_octets = str(ip_addr).split('.')
+        for i, octet in enumerate(ip_octets):
+            self.send_command(
+                sv2_const.SERVO_DATA_OBJ_300,
+                sv2_const.COMMUNICATION_INST_3,
+                sv2_const.IP_ADDR_1_ATTR_50 + i,
+                int(octet)
+            )
+        self.send_command(
+            sv2_const.SERVO_DATA_OBJ_300,
+            sv2_const.COMMUNICATION_INST_3,
+            sv2_const.COMM_PUSH_SETTINGS_ATTR_65,
+            1
+        )
+        self.ip_addr = ip_addr
+
+    def initial_setup(self):
+        """
+        Initial setup when connecting to a new servo.
+        Only needs to be run once when using the program for the first
+        time on a servo, and is not needed after that.
+        """
+        ip_addr_holder = self.ip_addr
+        self.ip_addr = sv2_const.SERVO_DEFAULT_IP_ADDR
+        # Disable Ethernet timeout.
+        self.send_command(
+            sv2_const.SERVO_DATA_OBJ_300,
+            sv2_const.COMMUNICATION_INST_3,
+            sv2_const.TIMEOUT_ERROR_ATTR_69,
+            sv2_const.TIMEOUT_DO_NOTHING
+        )
+        # Reset parameters to factory settings.
+        self.send_command(
+            sv2_const.SERVO_DATA_OBJ_300,
+            sv2_const.EXTENSION_INST_2,
+            sv2_const.SPECIAL_PARAM_ATTR_8,
+            sv2_const.FACTORY_RESET
+        )
+        print("Power cycle the drive (turn it off and on again).")
+        while input("Power cycled? ('Y' for Yes): ") != 'Y':
+            pass
+        # Disable Ethernet timeout.
+        self.send_command(
+            sv2_const.SERVO_DATA_OBJ_300,
+            sv2_const.COMMUNICATION_INST_3,
+            sv2_const.TIMEOUT_ERROR_ATTR_69,
+            sv2_const.TIMEOUT_DO_NOTHING
+        )
+        # Set operation mode to PR mode.
+        self.send_command(
+            sv2_const.SERVO_DATA_OBJ_300,
+            sv2_const.BASIC_INST_1,
+            sv2_const.OPERATION_MODE_ATTR,
+            sv2_const.PR_MODE
+        )
+        # Set E-gear ratio
+        self.send_command(
+            sv2_const.SERVO_DATA_OBJ_300,
+            sv2_const.BASIC_INST_1,
+            sv2_const.E_GEAR_RATIO_NUM_ATTR,
+            sv2_const.E_GEAR_NUM
+        )
+        self.send_command(
+            sv2_const.SERVO_DATA_OBJ_300,
+            sv2_const.BASIC_INST_1,
+            sv2_const.E_GEAR_RATIO_DEN_ATTR,
+            sv2_const.E_GEAR_DEN
+        )
+        # Reset communication settings to factory.
+        self.send_command(
+            sv2_const.SERVO_DATA_OBJ_300,
+            sv2_const.COMMUNICATION_INST_3,
+            sv2_const.COMM_SET_FACTORY_ATTR_64,
+            1
+        )
+        # Power cycle drive to set these parameters.
+        print("Power cycle the drive (turn it off and on again).")
+        while input("Power cycled? ('Y' for Yes): ") != 'Y':
+            pass
+        # Disable Ethernet timeout.
+        self.send_command(
+            sv2_const.SERVO_DATA_OBJ_300,
+            sv2_const.COMMUNICATION_INST_3,
+            sv2_const.TIMEOUT_ERROR_ATTR_69,
+            sv2_const.TIMEOUT_DO_NOTHING
+        )
+        # Set digital I/O to virtual I/O to be controlled in software.
+        self.send_command(
+            sv2_const.SERVO_DATA_OBJ_300,
+            sv2_const.COMMUNICATION_INST_3,
+            sv2_const.VIRTUAL_IO_MASK_ATTR_6,
+            sv2_const.SET_ALL_IO_VIRTUAL
+        )
+        # Set digital input signals to 0.
+        self.send_command(
+            sv2_const.SERVO_DATA_OBJ_300,
+            sv2_const.DIAGNOSIS_INST_4,
+            sv2_const.DIGITAL_INPUT_ATTR_7,
+            0
+        )
+        # Disable motor overtravel inputs and alarms.
+        self.send_command(
+            sv2_const.SERVO_DATA_OBJ_300,
+            sv2_const.EXTENSION_INST_2,
+            sv2_const.DI6_FUNC_ATTR_15,
+            0
+        )
+        self.send_command(
+            sv2_const.SERVO_DATA_OBJ_300,
+            sv2_const.EXTENSION_INST_2,
+            sv2_const.DI7_FUNC_ATTR_16,
+            0
+        )
+        # Disable non-volatile memory writes.
+        self.send_command(
+            sv2_const.SERVO_DATA_OBJ_300,
+            sv2_const.EXTENSION_INST_2,
+            sv2_const.AUX_FUNC_ATTR_30,
+            sv2_const.DISABLE_NV_WRITE
+            )
+        # Set IP address.
+        self.change_ip_addr(ip_addr_holder)
+        print("Finished initial setup.")
 
     def exit_handler(self, decel):
         """
@@ -539,6 +670,7 @@ class Sv2ConstSpeed(Sv2MovementPath):
             self.change_data(new_speed)
             return True
         else:
+            self.change_data(0)
             print("Too fast.")
             return False
 
@@ -621,6 +753,12 @@ class Sv2PointPoint(Sv2MovementPath):
             )
             return True
         else:
+            self.servo.send_command(
+                sv2_const.SERVO_DATA_OBJ_300,
+                sv2_const.CONTROL_INST_5,
+                sv2_const.SPD_ONE_ATTR + self.path_num - 1,
+                0
+            )
             print("New speed too fast.")
             return False
 
@@ -665,10 +803,20 @@ class Sv2PointPoint(Sv2MovementPath):
         return round(num_rotations * sv2_const.E_GEAR_DEN)
 
 if __name__ == "__main__":
+    # Sample code showing basic test control of a servo drive.
+    addr = input("IP Address (NNN.NNN.NNN.NNN): ")
     test_servo = Sv2Servo(
-        tb_const.SERVO_DRIVE_HOST, sv2_const.DORNER_PRECISION_2200_MAX_RPM
+        addr, 933
         )
-    atexit.register(test_servo.exit_handler, tb_const.SERVO_DRIVE_MAX_RPM)
+    atexit.register(
+        test_servo.exit_handler,
+        933)
+    if input("Initial setup? (Y/N): ") == 'Y':
+        test_servo.initial_setup()
+    if input("Change IP address? (Y/N): ") == 'Y':
+        addr = input("IP Address (NNN.NNN.NNN.NNN): ")
+        test_servo.change_ip_addr(addr)
+        print(test_servo.ip_addr)
     test_servo.disable_nv_mem_writes()
     test_servo.enable_servo()
 
