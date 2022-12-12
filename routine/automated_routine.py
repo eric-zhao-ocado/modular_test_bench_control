@@ -1,6 +1,6 @@
-from pymodbus.client import ModbusTcpClient
-
-import constants as c
+import sure_servo_2_control
+import sure_servo_2_constants as sv2_const
+import yaskawa_vfd_control
 import common_helpers
 import conveyors
 # USE PYTHON 3.8.0!!!!!

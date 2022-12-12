@@ -1,32 +1,33 @@
 from pymodbus.client import ModbusTcpClient
 from pymodbus.exceptions import ConnectionException
 
+import yaskawa_vfd_control as vfd_ctrl
+
 VFD_HOST = '192.168.1.20'
 
-protos_x = ModbusTcpClient(VFD_HOST)
+vfd = vfd_ctrl.YaskawaVfd(VFD_HOST)
 
-if(protos_x.connect()):
+if(vfd.host.connect()):
     pass
 else:
     print('No available connections.')
 
 def routine():
     while True:
-        # Requires prox sensors to be wired to consecutive addresses
         typ = input("R or W: ")
         if typ == 'R':
-            addr = int(input("Address: "), 16) - 1
+            addr = input("Address: ")
             try:
-                data = protos_x.read_holding_registers(int(addr), 5)
+                data = vfd.send_command(vfd.host.read_holding_registers, addr, 4)
             except ConnectionException:
                 print("connection error try again")
             else:
                 print(f"data: {data.registers}")
         elif typ == 'W':
-            addr = int(input("Address: "), 16) - 1
+            addr = input("Address: ")
             data = int(input("Data: "))
             try:
-                print(protos_x.write_registers(int(addr), data))
+                print(vfd.send_command(vfd.host.write_registers, addr, data))
             except ConnectionException:
                 print('connection error try again')
         

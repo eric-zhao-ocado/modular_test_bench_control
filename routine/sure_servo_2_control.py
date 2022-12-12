@@ -400,7 +400,7 @@ class Sv2Servo(EnipServer):
         self.change_ip_addr(ip_addr_holder)
         print("Finished initial setup.")
 
-    def exit_handler(self, decel):
+    def exit_handler(self, decel=1):
         """
         Starts procedure to stop the servo when program is ended.
 
@@ -575,6 +575,8 @@ class Sv2MovementPath(Sv2Path):
             servo: SureServo2 object.
             path_num: The path number (max value of 16).
             path_type: Type of movement path.
+            ins: Bool indicating whether the path will interrupt the
+                previous path when triggered.
         """
         super().__init__(servo, path_num, path_type)
         self.bitfield["interrupt"] = BitfieldSec(4, 1, ins)

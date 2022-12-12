@@ -1,7 +1,7 @@
 """
 Constants related to the test bench setup.
 """
-PROTOS_X_HOST = '192.168.1.142'
+PROTOS_X_HOST = '192.168.1.20'
 PROX_1_ADDR = 0
 PROX_2_ADDR = 1
 
