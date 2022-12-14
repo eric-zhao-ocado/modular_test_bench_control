@@ -3,7 +3,6 @@ from cpppo.server.enip import client
 from cpppo.server.enip.get_attribute import attribute_operations
 import time
 
-import constants as c
 import conveyors
 # REMINDER TO HAVE FEATURE TO JOG THE CONVEYOR SO THAT THE BELT IS AT THE RIGHT POSITION!!!
 # BASICALLY PUT A HOMING FUNCTION FOR MANUAL TESTS AT BEGINNING OF PROCEDURE
@@ -35,15 +34,6 @@ def dummy_arm_routine(location, speed):
     time.sleep(1)
     pass
 
-def stop_long_conveyor():
-    enip_send_command(c.SERVO_DRIVE_HOST,c.STOP_SERVO_PATH)
-    pass
-
-def run_long_conveyor(rpm):
-    enip_send_command(c.SERVO_DRIVE_HOST, c.SET_PATH_1_DEF)
-    enip_send_command(c.SERVO_DRIVE_HOST, c.SET_PATH_1_DATA+rpm)
-    enip_send_command(c.SERVO_DRIVE_HOST, c.TRIGGER_PATH_1)
-    print('Running long conveyor forwards.')
 
 def run_short_conveyor():
     print('Set short conveyor to running forwards.')
@@ -56,21 +46,6 @@ def check_ready():
     while (input('Input "Y" to start: ') != 'Y'):
         pass
 
-def check_prox_sensors(protos_x):
-    data = protos_x.read_discrete_inputs(c.PROX_1_ADDR, 2)
-    prox_1_sense = data.bits[0]
-    prox_2_sense = data.bits[1]
-
-    if(prox_1_sense and prox_2_sense):
-        print("Both sensors activated.")
-        return True
-    elif(prox_1_sense):
-        print("Only sensor 1 activated.")
-    elif(prox_2_sense):
-        print("Only sensor 2 activated")
-    else:
-        print("Nothing detected.")
-    return False
 
 # ORRRRRR input dimensions of parcel LxHxW, H being the shortest side
 def collect_params():

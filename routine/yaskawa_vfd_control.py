@@ -138,6 +138,10 @@ class YaskawaVfd:
         while not self.host.connect():
             print("Unable to connect, recheck initialization.")
             return False
+        self.write_register(
+            vfd_const.POWER_LOSS_OPER_ADDR,
+            vfd_const.CPU_POWER_ACTIVE
+        )
         print("Finished initialization.")
         return True
 

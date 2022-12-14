@@ -208,6 +208,17 @@ class Sv2Servo(EnipServer):
             sv2_const.DISABLE_NV_WRITE
             )
 
+    def clear_alarms(self):
+        """
+        Clears all alarms, needed after E-stop is pressed.
+        """
+        self.send_command(
+            sv2_const.SERVO_DATA_OBJ_300,
+            sv2_const.MONITORING_INST_0,
+            sv2_const.ALARM_ATTR,
+            0
+        )
+    
     def read_digital_input(self):
         """
         Returns the digital inputs (may be virtual) to the servo I/O.
@@ -683,7 +694,7 @@ class Sv2PointPoint(Sv2MovementPath):
     to move to a specified position.
     """
     def __init__(
-        self, servo, path_num, cmd, proc=False, position=0, speed=0, ins=1,
+        self, servo, path_num, cmd, position=0, speed=0, proc=False, ins=1,
         ovlp=0
         ):
         """
@@ -828,11 +839,12 @@ if __name__ == "__main__":
         test_speed = int(input("Enter speed: "))
 
         path_1 = Sv2PointPoint(
-            test_servo,
-            1,
-            sv2_const.CMD_REL,
-            position=test_position,
-            speed=test_speed
+                test_servo,
+                1,
+                sv2_const.CMD_REL,
+                position=test_position,
+                speed=test_speed
             )
+        test_servo.clear_alarms()
         path_1.trigger_path()
         
