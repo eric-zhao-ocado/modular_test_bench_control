@@ -135,7 +135,7 @@ class EnipServer:
                     [tag], route_path=[], send_path='')
                 ):
                 # Prints command sent.
-                print(f": {descr: <20}: {value}")
+                # print(f": {descr: <20}: {value}")
                 # Converts data type to decimal if needed.
                 if isinstance(value, list):
                     value = self.data_to_dec(value, '(SINT)')

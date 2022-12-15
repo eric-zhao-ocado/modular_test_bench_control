@@ -14,7 +14,7 @@ root.rowconfigure(index=2, weight=1)
 
 # Create a style
 style = ttk.Style(root)
-root.tk.call("source", "routine/static/forest-dark.tcl")  # theme
+root.tk.call("source", "./forest-dark.tcl")  # theme
 style.theme_use("forest-dark")
 
 # Create lists for the Comboboxes

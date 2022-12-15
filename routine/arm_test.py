@@ -102,17 +102,18 @@ def move_robot_routine(data, accel, event3):
         # )
         sys.stdout.write('\r')
         sys.stdout.flush()
-        sys.stdout.write(f"Joints: {robot.get_curjpos()} | ")
-        sys.stdout.write(f'cartesian: {robot.get_curpos()}')
-        rotation_matrix = [
-            [math.cos(math.pi / 4), -math.sin(math.pi / 4)],
-            [math.sin(math.pi / 4), math.cos(math.pi / 4)]
-                           ]
-        arr = robot.get_curpos()
-        new_arr = arr
-        new_arr[0] = rotation_matrix[0][0] * arr[0] + rotation_matrix[0][1] * arr[1]
-        new_arr[1] = rotation_matrix[1][0] * arr[0] + rotation_matrix[1][1] * arr[1]
-        print(new_arr)
+        # sys.stdout.write(f"Joints: {robot.get_curjpos()} | ")
+        # sys.stdout.write(f'cartesian: {robot.get_curpos()}')
+        # rotation_matrix = [
+        #     [math.cos(math.pi / 4), -math.sin(math.pi / 4)],
+        #     [math.sin(math.pi / 4), math.cos(math.pi / 4)]
+        #                    ]
+        # arr = robot.get_curpos()
+        # new_arr = arr
+        # new_arr[0] = rotation_matrix[0][0] * arr[0] + rotation_matrix[0][1] * arr[1]
+        # new_arr[1] = rotation_matrix[1][0] * arr[0] + rotation_matrix[1][1] * arr[1]
+        # print(new_arr)
+        
         # if event3.is_set():
         #     break
     # while True:
@@ -131,7 +132,11 @@ if __name__ == '__main__':
     
     accel = Value('i', 1)
     event_1 = multiprocessing.Event()
+    origin = [380.318, -266.229, 99.984, -180, 0.0, 45]
+    
     joint_pos = Array('d', range(6))
+    for i in range(6):
+        joint_pos[i] = origin[i]
     p1 = multiprocessing.Process(target=gui_app, args=(joint_pos, accel, event_1))
     p2 = multiprocessing.Process(target=move_robot_routine, args=(joint_pos, accel, event_1))
     p1.start()

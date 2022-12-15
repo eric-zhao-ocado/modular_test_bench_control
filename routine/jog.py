@@ -85,3 +85,4 @@ button.pack(side=RIGHT)
 button.bind('<ButtonPress-1>', lambda event: start_path(list_of_paths[0]))
 
 root.mainloop()
+# 8cm offset
