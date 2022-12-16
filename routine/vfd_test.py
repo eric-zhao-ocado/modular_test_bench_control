@@ -30,6 +30,6 @@ def routine():
                 print(vfd.send_command(vfd.host.write_registers, addr, data))
             except ConnectionException:
                 print('connection error try again')
-        
+
 if __name__ == '__main__':
     routine()
