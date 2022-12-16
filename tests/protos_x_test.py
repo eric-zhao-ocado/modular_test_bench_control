@@ -1,16 +1,27 @@
 import time
 from pymodbus.client import ModbusTcpClient
+import time
 
-PROTOS_X_HOST = '192.168.1.142'
-PROX_1_ADDR = 0
-PROX_2_ADDR = 1
+client = ModbusTcpClient('192.168.1.142')
 
-protos_x = ModbusTcpClient(PROTOS_X_HOST)
+while True:
+    try:
+        print(client.write_coils(0,[1, 1, 1, 1, 1, 1, 1, 1])) #vacuum
+        print(client.write_coils(8,[0, 0, 0, 0, 0, 0, 0, 0]))
+        print("VACUUM")
+        time.sleep(3)
+        
+        print(client.write_coils(8,[1, 1, 1, 1, 1, 1, 1, 1])) #vacuum
+        print(client.write_coils(0,[0, 0, 0, 0, 0, 0, 0, 0]))
+        time.sleep(0.1)
+        print(client.write_coils(0,[1, 1, 1, 1, 1, 1, 1, 1])) #vacuum
 
-while not protos_x.connect:
-    print("noo")
+        print("BLOW OFF")
+        time.sleep(3)
 
-print(protos_x.read_discrete_inputs(0))
-print(protos_x.read_coils(0))
-print(protos_x.write_coil(1,False))
-print(protos_x.write_register(1, 1))
+    except KeyboardInterrupt:
+        client.write_coils(16,[0,0]) #off
+        print("Valve OFF. Exiting loop.")
+        break
+
+client.close()
