@@ -1,46 +1,48 @@
 import tkinter as tk
-from tkinter import ttk, font
+from tkinter import ttk
 
 root = tk.Tk()
 root.title("Test Bench Control")
 
-
-# Make the app responsive
+# split screen into sections (2 x 3)
 root.columnconfigure(index=0, weight=1)
 root.columnconfigure(index=1, weight=1)
 root.rowconfigure(index=0, weight=1)
-root.rowconfigure(index=1, weight=1)
-root.rowconfigure(index=2, weight=1)
 
-# Create a style
-style = ttk.Style(root)
+
+
+style = ttk.Style(root)  # create a style
 root.tk.call("source", "routine/static/forest-dark.tcl")  # theme
 style.theme_use("forest-dark")
 
-# Create lists for the Comboboxes
-option_menu_list = ["", "OptionMenu", "Option 1", "Option 2"]
-combo_list = ["Combobox", "Editable item 1", "Editable item 2"]
-readonly_combo_list = ["Readonly combobox", "Item 1", "Item 2"]
+# control variables
+j1_sel = tk.BooleanVar(False)
+j1_val = tk.DoubleVar(value=75.0)
+j2_sel = tk.BooleanVar(False)
+j2_val = tk.DoubleVar(value=75.0)
+j3_sel = tk.BooleanVar(False)
+j3_val = tk.DoubleVar(value=75.0)
+j4_sel = tk.BooleanVar(False)
+j4_val = tk.DoubleVar(value=75.0)
+j5_sel = tk.BooleanVar(False)
+j5_val = tk.DoubleVar(value=75.0)
+j6_sel = tk.BooleanVar(False)
+j6_val = tk.DoubleVar(value=75.0)
 
-# Create control variables 
+
 a = tk.BooleanVar()
 b = tk.BooleanVar(value=True)
 c = tk.BooleanVar()
 d = tk.IntVar(value=2)
-e = tk.StringVar(value=option_menu_list[1])
 f = tk.BooleanVar()
 g_x = tk.DoubleVar(value=75.0)
 g_y = tk.DoubleVar(value=75.0)
 g_z = tk.DoubleVar(value=75.0)
 h = tk.BooleanVar()
 
-# Separator
-# separator = ttk.Separator(root)
-# separator.grid(row=1, column=0, padx=(20, 10), pady=10, sticky="ew")
-
 # Create a Frame for input widgets
 widgets_frame = ttk.Frame(root, padding=(0, 0, 0, 10))
-widgets_frame.grid(row=0, column=0, padx=10, pady=(30, 10), sticky="nsew", rowspan=3)
+widgets_frame.grid(row=0, column=0, padx=10, pady=(30, 10), sticky="nsew", rowspan=1)
 widgets_frame.columnconfigure(index=0, weight=1)
 
 # Entry
@@ -53,17 +55,6 @@ spinbox = ttk.Spinbox(widgets_frame, from_=0, to=100)
 spinbox.insert(0, "Spinbox")
 spinbox.grid(row=1, column=0, padx=5, pady=10, sticky="ew")
 
-# Combobox
-combobox = ttk.Combobox(widgets_frame, values=combo_list)
-combobox.current(0)
-combobox.grid(row=2, column=0, padx=5, pady=30,  sticky="ew")
-
-
-
-# Button
-button = ttk.Button(widgets_frame, text="Button")
-button.grid(row=6, column=0, padx=5, pady=10, sticky="nsew")
-
 # Accentbutton
 accentbutton = ttk.Button(widgets_frame, text="Accentbutton", style="Accent.TButton")
 accentbutton.grid(row=7, column=0, padx=5, pady=10, sticky="nsew")
@@ -72,27 +63,38 @@ accentbutton.grid(row=7, column=0, padx=5, pady=10, sticky="nsew")
 button = ttk.Checkbutton(widgets_frame, text="Togglebutton", style="ToggleButton")
 button.grid(row=8, column=0, padx=5, pady=10, sticky="nsew")
 
-# Switch
-switch = ttk.Checkbutton(widgets_frame, text="Switch", style="Switch")
-switch.grid(row=9, column=0, padx=5, pady=10, sticky="nsew")
+switch = ttk.Radiobutton(widgets_frame, text= 'J1')
+switch.grid(row=0, column=0, padx=(20, 10), sticky="ew")
 
-# Panedwindow
+scale = ttk.Scale(widgets_frame, from_=100, to=0, variable=g_x, command=lambda event: g_x.set(scale.get()))
+scale.grid(row=0, column=0, padx=(90, 20), sticky="ew")
+
+switch = ttk.Radiobutton(widgets_frame, text="J2")
+switch.grid(row=1, column=0, padx=(20, 10), sticky="nsew")
+
+scale2 = ttk.Scale(widgets_frame, from_=100, to=0, variable=g_y, command=lambda event: g_y.set(scale2.get()))
+scale2.grid(row=1, column=0, padx=(90, 10), sticky="ew")
+
+switch = ttk.Radiobutton(widgets_frame, text="J3")
+switch.grid(row=2, column=0, padx=(20, 10), sticky="nsew")
+
+scale3 = ttk.Scale(widgets_frame, from_=100, to=0, variable=g_z, command=lambda event: g_z.set(scale3.get()))
+scale3.grid(row=2, column=0, padx=(90, 10), sticky="ew")
+
+# stored waypoints display
+
 paned = ttk.PanedWindow(root)
-paned.grid(row=0, column=1, pady=(25, 5), sticky="nsew", rowspan=3)
+paned.grid(row=0, column=1, pady=(25, 5), sticky="nsew", rowspan=8)
 
-# Pane #1
 pane_1 = ttk.Frame(paned)
 paned.add(pane_1, weight=1)
 
-# Create a Frame for the Treeview
 treeFrame = ttk.Frame(pane_1)
 treeFrame.pack(expand=True, fill="both", padx=5, pady=5)
 
-# Scrollbar
 treeScroll = ttk.Scrollbar(treeFrame)
 treeScroll.pack(side="right", fill="y")
 
-# Treeview
 treeview = ttk.Treeview(treeFrame, selectmode="extended", yscrollcommand=treeScroll.set, columns=(1, 2), height=12)
 treeview.pack(expand=True, fill="both")
 treeScroll.config(command=treeview.yview)
@@ -103,9 +105,9 @@ treeview.column(1, anchor="w", width=120)
 treeview.column(2, anchor="w", width=120)
 
 # Treeview headings
-treeview.heading("#0", text="Column 1", anchor="center")
-treeview.heading(1, text="Column 2", anchor="center")
-treeview.heading(2, text="Column 3", anchor="center")
+treeview.heading("#0", text="Title", anchor="center")
+treeview.heading(1, text="Arm One", anchor="center")
+treeview.heading(2, text="Arm Two", anchor="center")
 
 # Define treeview data -->  x,y,z coordinate and testing plan append to this list with a button
 treeview_data = [
@@ -160,81 +162,67 @@ tab_1.columnconfigure(index=1, weight=1)
 tab_1.rowconfigure(index=0, weight=1)
 tab_1.rowconfigure(index=1, weight=1)
 tab_1.rowconfigure(index=2, weight=1)
-tab_1.rowconfigure(index=3, weight=1)
-tab_1.rowconfigure(index=4, weight=1)
-tab_1.rowconfigure(index=5, weight=1)
+
+# tab_1.rowconfigure(index=7, weight=1)
 notebook.add(tab_1, text="Dynamic Controls")
 
 # Scale
+switch = ttk.Radiobutton(tab_1, text= 'J1')
+switch.grid(row=0, column=0, padx=(20, 10), sticky="ew")
+
 scale = ttk.Scale(tab_1, from_=100, to=0, variable=g_x, command=lambda event: g_x.set(scale.get()))
-scale.grid(row=0, column=0, padx=(20, 10), pady=(20, 0), sticky="ew")
+scale.grid(row=0, column=0, padx=(90, 20), sticky="ew")
 
-# Progressbar
-progress = ttk.Progressbar(tab_1, value=0, variable=g_x, mode="determinate")
-progress.grid(row=0, column=1, padx=(10, 20), pady=(20, 0), sticky="ew")
+switch = ttk.Radiobutton(tab_1, text="J2")
+switch.grid(row=1, column=0, padx=(20, 10), sticky="nsew")
 
-# Scale
 scale2 = ttk.Scale(tab_1, from_=100, to=0, variable=g_y, command=lambda event: g_y.set(scale2.get()))
-scale2.grid(row=1, column=0, padx=(20, 10), pady=(20, 0), sticky="ew")
+scale2.grid(row=1, column=0, padx=(90, 10), sticky="ew")
 
-# Progressbar
-progress2 = ttk.Progressbar(tab_1, value=0, variable=g_y, mode="determinate")
-progress2.grid(row=1, column=1, padx=(10, 20), pady=(20, 0), sticky="ew")
+switch = ttk.Radiobutton(tab_1, text="J3")
+switch.grid(row=2, column=0, padx=(20, 10), sticky="nsew")
 
-# Scale
 scale3 = ttk.Scale(tab_1, from_=100, to=0, variable=g_z, command=lambda event: g_z.set(scale3.get()))
-scale3.grid(row=2, column=0, padx=(20, 10), pady=(20, 0), sticky="ew")
+scale3.grid(row=2, column=0, padx=(90, 10), sticky="ew")
 
-# Progressbar
-progress3 = ttk.Progressbar(tab_1, value=0, variable=g_z, mode="determinate")
-progress3.grid(row=2, column=1, padx=(10, 20), pady=(20, 0), sticky="ew")
+# Label
+# label = ttk.Label(tab_1, text="Joint 1: [90.000 deg]", justify="center")
+# label.grid(row=0, column=1, pady=10, columnspan=2)
 
-# Scale
-scale4 = ttk.Scale(tab_1, from_=100, to=0, variable=g_z, command=lambda event: g_z.set(scale3.get()))
-scale4.grid(row=3, column=0, padx=(20, 10), pady=(20, 0), sticky="ew")
+# label = ttk.Label(tab_1, text="Joint 2: [90.000 deg]", justify="center")
+# label.grid(row=1, column=1, pady=10, columnspan=2)
 
-# Progressbar
-progress4 = ttk.Progressbar(tab_1, value=0, variable=g_z, mode="determinate")
-progress4.grid(row=3, column=1, padx=(10, 20), pady=(20, 0), sticky="ew")
+# label = ttk.Label(tab_1, text="Joint 3: [90.000 deg]", justify="center")
+# label.grid(row=2, column=1, pady=10, columnspan=2)
 
-# Scale
-scale5 = ttk.Scale(tab_1, from_=100, to=0, variable=g_z, command=lambda event: g_z.set(scale3.get()))
-scale5.grid(row=4, column=0, padx=(20, 10), pady=(20, 0), sticky="ew")
+label = ttk.Label(tab_1, text="Joint 4: [90.000 deg]", justify="center")
+label.grid(row=0, column=1, pady=10, columnspan=2)
 
-# Progressbar
-progress5 = ttk.Progressbar(tab_1, value=0, variable=g_z, mode="determinate")
-progress5.grid(row=4, column=1, padx=(10, 20), pady=(20, 0), sticky="ew")
+label = ttk.Label(tab_1, text="Joint 5: [90.000 deg]", justify="center")
+label.grid(row=1, column=1, pady=10, columnspan=2)
 
-# Scale
-scale6 = ttk.Scale(tab_1, from_=100, to=0, variable=g_z, command=lambda event: g_z.set(scale3.get()))
-scale6.grid(row=5, column=0, padx=(20, 10), pady=(20, 0), sticky="ew")
+label = ttk.Label(tab_1, text="Joint 6: [90.000 deg]", justify="center")
+label.grid(row=2, column=1, pady=10, columnspan=2)
 
-# Progressbar
-progress6 = ttk.Progressbar(tab_1, value=0, variable=g_z, mode="determinate")
-progress6.grid(row=5, column=1, padx=(10, 20), pady=(20, 0), sticky="ew")
+entry = ttk.Entry(tab_1)
+entry.insert(0, "Entry")
+entry.grid(row=6, column=0, padx=5, pady=(7, 7), sticky="nsew")
 
-# # Label
-# label = ttk.Label(tab_1, text="90 deg", justify="center")
-# label.grid(row=1, column=0, pady=10, columnspan=2)
+accentbutton = ttk.Button(tab_1, text="Submit Co-ordinates", style="Accent.TButton")
+accentbutton.grid(row=6, column=1, sticky="nsew", pady=(7, 7), columnspan=2)
+
+
 
 # Tab #2
 tab_2 = ttk.Frame(notebook)
 notebook.add(tab_2, text="Graphs / Data")
 
-# Tab #3
-tab_3 = ttk.Frame(notebook)
-notebook.add(tab_3, text="Overview")
 
-notebook.pack(expand=True, fill="both", padx=5, pady=5)
-
-# Sizegrip
-sizegrip = ttk.Sizegrip(root)
-sizegrip.grid(row=100, column=100, padx=(0, 5), pady=(0, 5))
 
 
 root.update()
 root.minsize(root.winfo_width(), root.winfo_height())  # set minsize
 x_cordinate = int((root.winfo_screenwidth()/2) - (root.winfo_width()/2))  # center window
 y_cordinate = int((root.winfo_screenheight()/2) - (root.winfo_height()/2))  # center window
-root.geometry("1920x1080")  # default window size
+root.geometry("920x1080")  # default window size
 root.mainloop()

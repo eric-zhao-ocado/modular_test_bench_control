@@ -40,7 +40,7 @@ namespace eval ttk::theme::forest-dark {
             -insertwidth 1 \
             -insertcolor $colors(-fg) \
             -fieldbackground $colors(-selectbg) \
-            -font {fixed 11} \
+            -font {courier-10-pitch 11} \
             -borderwidth 1 \
             -relief flat
 
