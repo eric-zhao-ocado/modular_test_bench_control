@@ -17,17 +17,31 @@ class MainWindow(QWidget):
         waypoint_controls = QRadioButton("Import")
 
         # Dynamic Controls
-        dynamic_controls_g = QGroupBox("Dynamic Controls")
+        dynamic_controls = QGroupBox("Dynamic Controls")
+        accel_label = QLabel("arm acceleration:")
+        accel_value = QLabel("344")
+        accel_dial = QDial(self)
         x_slider = QSlider(minimum=45, maximum=80, orientation=Qt.Horizontal)
         y_slider = QSlider(minimum=45, maximum=80, orientation=Qt.Horizontal)
         z_slider = QSlider(minimum=45, maximum=80, orientation=Qt.Horizontal)
+        x_label = QLabel("x:")
+        y_label = QLabel("y:")
+        z_label = QLabel("z:")
+        x_value = QLabel("x:")
+        y_value = QLabel("y:")
+        z_value = QLabel("z:")
+        submit_name = QLineEdit('Waypoint name')
+        submit_start = QPushButton('Source')
+        submit_end = QPushButton('Destination')
+        verticalSpacer = QSpacerItem(2, 20, QSizePolicy.Minimum)
+        horizontalSpacer = QSpacerItem(40, 2, QSizePolicy.Minimum)
 
         # Static Controls
-        static_controls_g = QGroupBox("Static Controls")
+        static_controls = QGroupBox("Static Controls")
         xyz_pos = QRadioButton("Static Controls")
 
         # Conveyor Controls
-        conveyor_controls_g = QGroupBox("Conveyor Controls")
+        conveyor_controls = QGroupBox("Conveyor Controls")
         stop_conveyor = QRadioButton("Conveyor_controls")
 
         # Joint Limits
@@ -39,48 +53,66 @@ class MainWindow(QWidget):
 
 
         # layout 
-        top_row_g = QGroupBox("Top Row")
+        top_row = QGroupBox("Top Row")
+        
+        acceleration = QHBoxLayout()
+        acceleration.addWidget(accel_dial)
+        acceleration.addItem(horizontalSpacer)
+        acceleration.addWidget(accel_label)
+        acceleration.addWidget(accel_value)
         
 
-        dynamic_controls = QHBoxLayout()
-        dynamic_controls.addWidget(x_slider)
-        dynamic_controls_g.setLayout(dynamic_controls)
+        sliders = QVBoxLayout()
+        sliders.addWidget(x_label)
+        sliders.addWidget(x_slider)
+        sliders.addWidget(y_label)
+        sliders.addWidget(y_slider)
+        sliders.addWidget(z_label)
+        sliders.addWidget(z_slider)
+        
+        dc_submit = QHBoxLayout()
+        dc_submit.addWidget(submit_name)
+        dc_submit.addWidget(submit_start)
+        dc_submit.addWidget(submit_end)
 
-        static_controls = QHBoxLayout()
-        static_controls.addWidget(xyz_pos)
-        static_controls_g.setLayout(static_controls)
+        dc = QVBoxLayout()
+        dc.addLayout(acceleration)
+        dc.addLayout(sliders)
+        dc.addItem(verticalSpacer)
+        dc.addLayout(dc_submit)
+        dynamic_controls.setLayout(dc)
+
+        sc = QHBoxLayout()
+        sc.addWidget(xyz_pos)
+        static_controls.setLayout(sc)
         
 
-        conveyor_controls = QHBoxLayout()
-        conveyor_controls.addWidget(stop_conveyor)
-        conveyor_controls_g.setLayout(conveyor_controls)
+        cc = QHBoxLayout()
+        cc.addWidget(stop_conveyor)
+        conveyor_controls.setLayout(cc)
 
-        top_row = QHBoxLayout()
-        top_row.addWidget(waypoint_tree)
-        top_row.addWidget(waypoint_controls)
-        top_row_g.setLayout(top_row)
+        tr = QHBoxLayout()
+        tr.addWidget(waypoint_tree)
+        tr.addWidget(waypoint_controls)
+        top_row.setLayout(tr)
 
 
         bottom_row = QHBoxLayout()
-        bottom_row.addWidget(dynamic_controls_g)
-        bottom_row.addWidget(static_controls_g)
-
-        bottom_right_row = QHBoxLayout()
-        bottom_right_row.addWidget(conveyor_controls_g)
-        bottom_right_row.addWidget(placeholder)
+        bottom_row.addWidget(dynamic_controls,  stretch=2)
+        bottom_row.addWidget(static_controls, stretch=1)
+        bottom_row.addWidget(conveyor_controls, stretch=0)
 
         lhs = QVBoxLayout()
-        lhs.addWidget(top_row_g)
+        lhs.addWidget(top_row)
         lhs.addLayout(bottom_row)
 
         rhs = QVBoxLayout()
-        rhs.addWidget(z_slider)
-        rhs.addLayout(bottom_right_row)
-        
+        rhs.addWidget(placeholder)
+        rhs.addWidget(placeholder)
 
         main_layout = QHBoxLayout()
-        main_layout.addLayout(lhs)
-        main_layout.addLayout(rhs)
+        main_layout.addLayout(lhs, stretch=2)
+        main_layout.addLayout(rhs, stretch=1)
 
         self.setLayout(main_layout)
 
