@@ -64,7 +64,10 @@ class MainWindow(QWidget):
         bottom_row = QHBoxLayout()
         bottom_row.addWidget(dynamic_controls_g)
         bottom_row.addWidget(static_controls_g)
-        bottom_row.addWidget(conveyor_controls_g)
+
+        bottom_right_row = QHBoxLayout()
+        bottom_right_row.addWidget(conveyor_controls_g)
+        bottom_right_row.addWidget(placeholder)
 
         lhs = QVBoxLayout()
         lhs.addWidget(top_row_g)
@@ -72,7 +75,8 @@ class MainWindow(QWidget):
 
         rhs = QVBoxLayout()
         rhs.addWidget(z_slider)
-        rhs.addWidget(placeholder)
+        rhs.addLayout(bottom_right_row)
+        
 
         main_layout = QHBoxLayout()
         main_layout.addLayout(lhs)
