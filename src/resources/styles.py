@@ -57,7 +57,7 @@ BACKWARD_BUTTON  = ("""
         """)
 
 DIAL  = ("""
-        background-color: white;
+        
         """)
 
 BASIC_BUTTON = ("""
@@ -84,4 +84,15 @@ BASIC_BUTTON = ("""
         vertical-align: middle;
         white-space: nowrap;
         word-wrap: break-word;
+""")
+
+LINE_EDIT = ("""
+        background-color: #ffffff;
+        border-radius: 5px;
+        color: darkgray;
+        text-align: center;
+        font-size: 14px;
+        border: 1px solid rgba(27, 31, 35, .15);
+        line-height: 20px;
+        padding: 6px 16px;
 """)
