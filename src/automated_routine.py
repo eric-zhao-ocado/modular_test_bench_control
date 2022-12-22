@@ -7,6 +7,7 @@ import multiprocessing as mp
 import time
 import tkinter
 import sys
+import csv
 
 from fanucpy import Robot
 
@@ -144,8 +145,6 @@ def move_arm(
             and min_y.value < pos[1] < tb_cnst.MAX_Y
         ):
             try:
-                # print("\n")
-                # print(f'{"Calling move command:":<31}{time.perf_counter()}')
                 robot.move(
                     "pose",
                     vals=pos,
@@ -159,8 +158,6 @@ def move_arm(
                 print(repr(exception))
         # Clear the move arm event.
         move_arm_event.clear()
-        # print(f"Joint position: {robot.get_curjpos()}")
-        # print(f"Carte position: {robot.get_curpos()}")
     quit_event.set()
     robot.disconnect()
     sys.exit(0)
@@ -266,17 +263,18 @@ def add_point(paths, arm_mover, vel, acc):
         paths: Array containing waypoints
         arm_mover: Array containing coordinates of arm.
     """
-    paths.append([arm_mover[:], vel.value, acc.value])
+    paths.append(["WAYPOINT", arm_mover[:], vel.value, acc.value])
     print(paths)
 
-def add_vacuum(paths):
+def add_vacuum(paths, index):
     """
     Adds a vacuum ON point to the array.
 
     Args:
         paths: Array containing waypoints
+        index: Valve index
     """
-    paths.append("VACUUM")
+    paths.append(["VACUUM", index])
 
 def add_blowoff(paths):
     """
@@ -285,7 +283,17 @@ def add_blowoff(paths):
     Args:
         paths: Array containing waypoints
     """
-    paths.append("BLOWOFF")
+    paths.append(["BLOWOFF"])
+    
+def add_delay(paths, dly_time):
+    """
+    Adds a delay point to the array.
+    
+    Args:
+        paths: Array containing waypoints
+        dly_time: Delay time in seconds
+    """
+    paths.append(["DELAY", dly_time])
 
 def reset_parcel(
     conveyor_paths: dict,
@@ -411,7 +419,7 @@ def gui_app(
     # X coordinate slider.
     x_pos = tkinter.Scale(
         jog_arm_window,
-        from_=min_arm_x, to=max_arm_x,
+        from_=min_arm_x + 0.001, to=max_arm_x,
         orient=tkinter.HORIZONTAL,
         resolution=0.001,
         length=500
@@ -473,7 +481,7 @@ def gui_app(
     # Button to add a Vacuum ON point.
     button = tkinter.Button(jog_arm_window, text= "Vacuum")
     button.pack(side = tkinter.LEFT)
-    button.bind('<ButtonPress-1>', lambda event: add_vacuum(paths))
+    button.bind('<ButtonPress-1>', lambda event: add_vacuum(paths, 1))
     # Button to add a blow-off point.
     button = tkinter.Button(jog_arm_window, text= "Blow-off")
     button.pack(side = tkinter.LEFT)
@@ -613,10 +621,10 @@ def automated_routine():
     gui_process.start()
     vel.value = 100
     accel.value = 100
-    min_conveyor_pos = round(sv2_cnst.E_GEAR_DEN * (2 ** 0.5 * (arm_origin_x - default_origin[0])-half_diagonal) / pick_conveyor.turn_circum)
+    min_conveyor_pos = round(sv2_cnst.E_GEAR_DEN * (2 ** 0.5 * (arm_origin_x - default_origin[0])-half_diagonal) / pick_conveyor.turn_circum) + 1000
     pick_conveyor.add_point_point_path(
         "min_location",
-        sv2_cnst.CMD_ABS, min_conveyor_pos + 1, 50, 4000)
+        sv2_cnst.CMD_ABS, min_conveyor_pos + 100, 50, 4000)
     # Loop to jog the conveyor.
     while not next_stage_event.is_set():
         # Move arm to current set position
@@ -633,7 +641,6 @@ def automated_routine():
             while pick_speed_mon.check_value() != 0:
                 pass
             time.sleep(0.2)
-            # pick_conveyor.set_home()
             jog_conveyor_event.set()
         # Check if conveyor position is too far forwards, reset position if so.
         elif 4000000000 >= position >= max_conveyor_pos:
@@ -663,7 +670,15 @@ def automated_routine():
     cycles = int(input('Number of cycles: '))
     feed_conveyor.start_motor_forwards()
 
-    while cycles > 0:
+    # reset data file
+    with open('data.csv', "w+", encoding='UTF8', newline='') as file:
+        headings = ['Cycle number', 'Time (s)', 'Type', 'Value', 'Velocity (%)', 'Acceleration (%)']
+        # create the csv writer
+        writer = csv.writer(file)
+        writer.writerow(headings)
+    start_time = time.perf_counter()
+    cycle_num = 1
+    while cycle_num <= cycles:
         # Wait for package to be detected.
         reset_parcel(conveyor_paths, protos_x, pick_speed_mon)
         time.sleep(0.2)
@@ -673,20 +688,30 @@ def automated_routine():
         while pick_speed_mon.check_value() != 0:
             pass
         for path in paths[:]:
-            if path == "VACUUM":
-                protos_x.vacuum(1)
-            elif path == "BLOWOFF":
+            # open the file in the write mode
+            with open('data.csv', 'a', encoding='UTF8', newline='') as file:
+                info = path.copy()
+                info.insert(0, time.perf_counter()-start_time)
+                info.insert(0, cycle_num)
+                # create the csv writer
+                writer = csv.writer(file)
+                # write a row to the csv file
+                writer.writerow(info)
+            if path[0] == "VACUUM":
+                protos_x.vacuum(path[1])
+            elif path[0] == "BLOWOFF":
                 protos_x.blowoff()
-            else:
+            elif path[0] == "DELAY":
+                time.sleep(path[1])
+            elif path[0] == "WAYPOINT":
                 for i in range(6):
-                    arm_mover[i] = path[0][i]
-                    vel.value = path[1]
-                    accel.value = path[2]
+                    arm_mover[i] = path[1][i]
+                    vel.value = path[2]
+                    accel.value = path[3]
                 move_arm_event.set()
                 while move_arm_event.is_set():
                     pass
-        cycles -= 1
-
+        cycle_num += 1
     print("Automated routine finished.")
     quit_event.set()
     move_arm_event.set()

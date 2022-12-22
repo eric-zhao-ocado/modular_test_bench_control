@@ -13,7 +13,6 @@ class ProtosX:
     """
     ProtosX object for ModbusTCP I/O communication.
     """
-    
     def __init__(self, ip_addr):
         """
         Initializes ProtosX ModbusTCP object.
@@ -56,9 +55,9 @@ class ProtosX:
                 self.client.connect()
                 self.blowoff()
                 print("Closing vacuum")
-                print(self.client.write_coils(0,[0, 0, 0, 0, 0, 0, 0, 0]))
+                self.client.write_coils(0, [0, 0, 0, 0, 0, 0, 0, 0])
                 print("Closing blowoff")
-                print(self.client.write_coils(8,[0, 0, 0, 0, 0, 0, 0, 0]))
+                self.client.write_coils(8, [0, 0, 0, 0, 0, 0, 0, 0])
             except Exception:
                 print("Exception")
             else:
