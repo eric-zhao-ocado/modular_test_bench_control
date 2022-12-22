@@ -11,8 +11,31 @@ class MainWindow(QWidget):
         self.setWindowTitle("Induct Testbench Control  (v1.0.0-alpha)")
         self.setGeometry(0, 0, 1500, 800)
         
-        # sliders
 
+        ### TEST ###
+        l1 = QTreeWidgetItem([ "String A",  "String B",  "String C" ])
+        l2 = QTreeWidgetItem([ "String AA", "String BB", "String CC" ])
+
+
+        for i in range(3):
+            l1_child = QTreeWidgetItem(["Child A" + str(i), "Child B" + str(i), "Child C" + str(i)])
+            l1.addChild(l1_child)
+
+        for j in range(2):
+            l2_child = QTreeWidgetItem(["Child AA" + str(j), "Child BB" + str(j), "Child CC" + str(j)])
+            l2.addChild(l2_child)
+
+        tw = QTreeWidget()
+        tw.resize(500,200)
+        tw.setColumnCount(3)
+        tw.setHeaderLabels(["Column 1", "Column 2", "Column 3"])
+        tw.addTopLevelItem(l1)
+        tw.addTopLevelItem(l2)
+        tw.setStyleSheet(TREE)
+        ### TEST ###
+
+
+        # sliders
 
         # design 
         title=QFont()
@@ -38,13 +61,14 @@ class MainWindow(QWidget):
         # Dynamic Controls
         dynamic_controls = QGroupBox("Dynamic Controls")
         dynamic_controls.setFont(title)
+        dynamic_controls.setEnabled(False)
     
         accel_dial = QDial(self)
         accel_dial.setStyleSheet(DIAL)
         accel_dial.setMinimum(0)
         accel_dial.setMaximum(100)
         accel_dial.setValue(0)
-        accel_dial.setNotchesVisible(True)
+        accel_dial.setNotchesVisible(False)
     
         accel_label = QLabel("acceleration")
         accel_label.setFont(unbold)
@@ -56,7 +80,7 @@ class MainWindow(QWidget):
         velocity_dial.setMinimum(0)
         velocity_dial.setMaximum(100)
         velocity_dial.setValue(0)
-        velocity_dial.setNotchesVisible(True)
+        velocity_dial.setNotchesVisible(False)
     
     
         velocity_label = QLabel("velocity")
@@ -97,11 +121,13 @@ class MainWindow(QWidget):
         micro_verticalSpacer = QSpacerItem(2, 10, QSizePolicy.Minimum)
         horizontalSpacer = QSpacerItem(40, 2, QSizePolicy.Minimum)
         micro_horizontalSpacer = QSpacerItem(15, 2, QSizePolicy.Minimum)
+        nano_horizontalSpacer = QSpacerItem(5, 2, QSizePolicy.Minimum)
 
 
         # Static Controls
         static_controls = QGroupBox("Static Controls")
         static_controls.setFont(title)
+        static_controls.setEnabled(False)
 
         sc_x_label = QLabel("x:")
         sc_y_label = QLabel("y:")
@@ -131,8 +157,8 @@ class MainWindow(QWidget):
         submit_start_sc.setStyleSheet(BASIC_BUTTON)
         submit_end_sc = QPushButton('Destination')
         submit_end_sc.setStyleSheet(BASIC_BUTTON)
-        check_joint_limits = QPushButton('Check Joint Limits')
-        check_joint_limits.setStyleSheet(BASIC_BUTTON)
+        check_joint_limits = QPushButton('Send Waypoint')
+        check_joint_limits.setStyleSheet(FORWARD_BUTTON)
         check_joint_limits.setFont(QFont('Arial', 16))
         check_joint_limits.setFont(QFont(unbold))
 
@@ -148,38 +174,59 @@ class MainWindow(QWidget):
         sc_z_val.setStyleSheet('color: deeppink')
 
         def joint_limits():
-            sc_x_val.setText("{}".format(x_static.text()))
-            sc_y_val.setText("{}".format(y_static.text()))
-            sc_z_val.setText("{}".format(z_static.text()))
             x_slider.setValue(int(x_static.text()))
             y_slider.setValue(int(y_static.text()))
             z_slider.setValue(int(z_static.text()))
+            sc_x_val.setText("{}".format(x_slider.value()))
+            sc_y_val.setText("{}".format(y_slider.value()))
+            sc_z_val.setText("{}".format(z_slider.value()))
 
         check_joint_limits.clicked.connect(joint_limits)
-
 
         # Conveyor Controls
         conveyor_controls = QGroupBox("Conveyor Controls")
         conveyor_controls.setFont(title)
+        conveyor_controls.setEnabled(False)
+
+        # Calibration
+        calibration = QGroupBox("Calibration Settings")
+        calibration.setFont(title)
 
         forward_btn = QPushButton('Forward')
         forward_btn.setStyleSheet(FORWARD_BUTTON)
-        # forward_btn.setFont(unbold)
         
         backward_btn = QPushButton('Backward')
         backward_btn.setStyleSheet(BACKWARD_BUTTON)
-        # backward_btn.setFont(unbold)
-        set_btn = QPushButton('Set Position')
+
+        reset_btn = QPushButton('Reset')
+        reset_btn.setStyleSheet(BASIC_BUTTON)
+
+        set_btn = QPushButton('Set')
         set_btn.setStyleSheet(BASIC_BUTTON)
+    
+        configure_btn = QPushButton('Configure')
+        configure_btn.setStyleSheet(BASIC_BUTTON)
 
-        # set_btn.setFont(unbold)
+        def init_complete():
+            conveyor_controls.setEnabled(True)
+            top_row.setEnabled(True)
+            static_controls.setEnabled(True)
+            dynamic_controls.setEnabled(True)
+            calibration.setEnabled(False)
 
-        dimensions_label = QLabel("Item Dimensions (cm)")
+        configure_btn.clicked.connect(init_complete)
+
+
+
+        dimensions_label = QLabel("Item Dimensions (mm)")
         dimensions_label.setFont(unbold)
 
-        width_label = QLabel("width :")
-        length_label = QLabel("length :")
-        height_label = QLabel("height :")
+        width_label = QLabel("w: ")
+        width_label.setFont(unbold)
+        length_label = QLabel("l:")
+        length_label.setFont(unbold)
+        height_label = QLabel("h:")
+        height_label.setFont(unbold)
 
         width_entry = QLineEdit('')
         width_entry.setStyleSheet(LINE_EDIT)
@@ -194,6 +241,28 @@ class MainWindow(QWidget):
         height_entry.setAlignment(Qt.AlignCenter)
         height_entry.setValidator(onlyInt)
 
+        griper_label = QLabel("Gripper Limits (mm) :")
+        item_label = QLabel("Item dimensions (mm) :")
+        extended_label = QLabel("Extended Length: ")
+        extended_label.setFont(unbold)
+        compressed_label = QLabel("Compressed Length")
+        compressed_label.setFont(unbold)
+        max_width_label = QLabel("Max Width:")
+        max_width_label.setFont(unbold)
+
+        extended_entry = QLineEdit('')
+        extended_entry.setStyleSheet(LINE_EDIT)
+        extended_entry.setAlignment(Qt.AlignCenter)
+        extended_entry.setValidator(onlyInt)
+        compressed_entry = QLineEdit('')
+        compressed_entry.setStyleSheet(LINE_EDIT)
+        compressed_entry.setAlignment(Qt.AlignCenter)
+        compressed_entry.setValidator(onlyInt)
+        max_width_entry = QLineEdit('')
+        max_width_entry.setStyleSheet(LINE_EDIT)
+        max_width_entry.setAlignment(Qt.AlignCenter)
+        max_width_entry.setValidator(onlyInt)
+
       
 
 
@@ -204,11 +273,10 @@ class MainWindow(QWidget):
         placeholder = QSlider(minimum=45, maximum=80, orientation=Qt.Horizontal)
         placeholder.setStyleSheet(SLIDER)
 
-
-
         # layout 
         top_row = QGroupBox("Routine")
         top_row.setFont(title)
+        top_row.setEnabled(False)
         
         dials = QHBoxLayout()
         dials.addWidget(accel_dial)
@@ -247,7 +315,6 @@ class MainWindow(QWidget):
         dc_submit = QHBoxLayout()
         dc_submit.addWidget(submit_name, stretch=2)
         dc_submit.addWidget(submit_start, stretch=1)
-        dc_submit.addWidget(submit_end, stretch=1)
 
         dc = QVBoxLayout()
         dc.addLayout(dials)
@@ -256,110 +323,139 @@ class MainWindow(QWidget):
         dc.addLayout(dc_submit)
         dynamic_controls.setLayout(dc)
 
+        dynamic_conveyor = QVBoxLayout()
+        dynamic_conveyor.addWidget(static_controls)
+        dynamic_conveyor.addItem(verticalSpacer)
+        dynamic_conveyor.addWidget(dynamic_controls)
+    
 
-        xyz_header = QHBoxLayout()
-        xyz_header.addWidget(sc_x_label)
-        xyz_header.addWidget(sc_x_val)
-        xyz_header.addWidget(sc_y_label)
-        xyz_header.addWidget(sc_y_val)
-        xyz_header.addWidget(sc_z_label)
-        xyz_header.addWidget(sc_z_val)
+
+        # xyz_header = QHBoxLayout()
+        # # xyz_header.addItem(horizontalSpacer)
+        # xyz_header.addWidget(sc_x_label)
+        # xyz_header.addItem(nano_horizontalSpacer)
+        # xyz_header.addWidget(sc_x_val)
+        # xyz_header.addItem(micro_horizontalSpacer)
+        # xyz_header.addWidget(sc_y_label)
+        # xyz_header.addItem(nano_horizontalSpacer)
+        # xyz_header.addWidget(sc_y_val)
+        # xyz_header.addItem(micro_horizontalSpacer)
+        # xyz_header.addWidget(sc_z_label)
+        # xyz_header.addItem(nano_horizontalSpacer)
+        # xyz_header.addWidget(sc_z_val)
+        # xyz_header.addItem(horizontalSpacer)
 
         x_entry = QHBoxLayout()
-        x_entry.addItem(micro_horizontalSpacer)
         x_entry.addWidget(x_static_label)
-        x_entry.addItem(micro_horizontalSpacer)
         x_entry.addWidget(x_static)
-        x_entry.addItem(micro_horizontalSpacer)
 
         y_entry = QHBoxLayout()
-        y_entry.addItem(micro_horizontalSpacer)
         y_entry.addWidget(y_static_label)
-        y_entry.addItem(micro_horizontalSpacer)
         y_entry.addWidget(y_static)
-        y_entry.addItem(micro_horizontalSpacer)
+        
 
         z_entry = QHBoxLayout()
-        z_entry.addItem(micro_horizontalSpacer)
         z_entry.addWidget(z_static_label)
-        z_entry.addItem(micro_horizontalSpacer)
         z_entry.addWidget(z_static)
-        z_entry.addItem(micro_horizontalSpacer)
 
         src_dest = QHBoxLayout()
         src_dest.addWidget(submit_start_sc)
-        src_dest.addWidget(submit_end_sc)
+
+
+        sc_top = QHBoxLayout()
+        sc_top.addLayout(x_entry)
+        sc_top.addLayout(y_entry)
+        sc_top.addLayout(z_entry)
+        sc_top.addWidget(check_joint_limits)
 
         sc = QVBoxLayout()
-        sc.addItem(verticalSpacer)
-        sc.addLayout(x_entry)
-        sc.addItem(micro_verticalSpacer)
-        sc.addLayout(y_entry)
-        sc.addItem(micro_verticalSpacer)
-        sc.addLayout(z_entry)
+        sc.addLayout(sc_top)
 
-        sc.addItem(verticalSpacer)
-        sc.addItem(verticalSpacer)
-        sc.addLayout(xyz_header)
-        sc.addItem(micro_verticalSpacer)
-        sc.addWidget(check_joint_limits)
-        
-        
-        sc.addItem(verticalSpacer)
-        sc.addItem(verticalSpacer)
-        sc.addWidget(wp_name_sc)
-        sc.addLayout(src_dest)
         static_controls.setLayout(sc)
         
 
         box_width = QHBoxLayout()
         box_width.addWidget(width_label)
-        box_width.addItem(micro_horizontalSpacer)
         box_width.addWidget(width_entry)
         box_length = QHBoxLayout()
         box_length.addWidget(length_label)
-        box_length.addItem(micro_horizontalSpacer)
         box_length.addWidget(length_entry)
         box_height = QHBoxLayout()
         box_height.addWidget(height_label)
-        box_height.addItem(micro_horizontalSpacer)
         box_height.addWidget(height_entry)
 
+        extended = QHBoxLayout()
+        extended.addWidget(extended_label)
+        extended.addItem(micro_horizontalSpacer)
+        extended.addWidget(extended_entry)
+        compressed = QHBoxLayout()
+        
+        compressed.addWidget(compressed_label)
+        compressed.addItem(micro_horizontalSpacer)
+        compressed.addWidget(compressed_entry)
+        max_width = QHBoxLayout()
+       
+        max_width.addWidget(max_width_label)
+        max_width.addItem(micro_horizontalSpacer)
+        max_width.addWidget(max_width_entry)
+
+        cc_bot = QHBoxLayout()
+        cc_bot.addLayout(box_width)
+        cc_bot.addItem(micro_horizontalSpacer)
+        cc_bot.addLayout(box_length)
+        cc_bot.addItem(micro_horizontalSpacer)
+        cc_bot.addLayout(box_height)
+
         cc = QVBoxLayout()
-        cc.addItem(verticalSpacer)
-        cc.addWidget(forward_btn)
-        cc.addItem(verticalSpacer)
-        cc.addWidget(backward_btn)
-        cc.addItem(verticalSpacer)
-        cc.addWidget(dimensions_label)
-        cc.addLayout(box_width)
         cc.addItem(micro_verticalSpacer)
-        cc.addLayout(box_length)
+        cc.addWidget(griper_label)
         cc.addItem(micro_verticalSpacer)
-        cc.addLayout(box_height)
-        cc.addItem(verticalSpacer)
-        cc.addWidget(set_btn)
-        conveyor_controls.setLayout(cc)
+        cc.addLayout(extended)
+        cc.addLayout(compressed)
+        cc.addLayout(max_width)
+        cc.addItem(micro_verticalSpacer)
+        cc.addItem(micro_verticalSpacer)
+        cc.addWidget(item_label)
+        cc.addItem(micro_verticalSpacer)
+        cc.addLayout(cc_bot)
+        cc.addItem(micro_verticalSpacer)
+        cc.addItem(micro_verticalSpacer)
+        
+        cc.addWidget(configure_btn)
+    
+        calibration.setLayout(cc)
+
+        conveyor = QHBoxLayout()
+        conveyor.addWidget(forward_btn)
+        conveyor.addWidget(backward_btn)
+        conveyor.addWidget(set_btn)
+        conveyor.addWidget(reset_btn)
+        
+        
+        conveyor_controls.setLayout(conveyor)
 
         bank = QHBoxLayout()
-        bank.addWidget(waypoint_tree)
+        bank.addWidget(tw)
 
         bank_controls = QVBoxLayout()
         bank_controls.addWidget(waypoint_controls)
 
 
         tr = QHBoxLayout()
-        tr.addLayout(bank, stretch=3)
+        tr.addLayout(bank, stretch=2)
         tr.addLayout(bank_controls, stretch=1)
         top_row.setLayout(tr)
 
+        static_calibrate = QVBoxLayout()
+        static_calibrate.addWidget(calibration)
+        static_calibrate.addItem(verticalSpacer)
+        static_calibrate.addWidget(conveyor_controls)
 
         bottom_row = QHBoxLayout()
-        bottom_row.addWidget(dynamic_controls,  stretch=2)
+        bottom_row.addLayout(dynamic_conveyor, stretch=3)
         bottom_row.addItem(micro_horizontalSpacer)
-        bottom_row.addWidget(static_controls, stretch=1)
-        bottom_row.addItem(micro_horizontalSpacer)
-        bottom_row.addWidget(conveyor_controls, stretch=0)
+        bottom_row.addLayout(static_calibrate, stretch=2)
+        
 
         lhs = QVBoxLayout()
         lhs.addWidget(top_row)
@@ -371,8 +467,8 @@ class MainWindow(QWidget):
         rhs.addWidget(placeholder)
 
         main_layout = QHBoxLayout()
-        main_layout.addLayout(lhs, stretch=5)
-        main_layout.addLayout(rhs, stretch=2)
+        main_layout.addLayout(lhs, stretch=2)
+        main_layout.addLayout(rhs, stretch=1)
 
         self.setLayout(main_layout)
 

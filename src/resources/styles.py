@@ -1,29 +1,62 @@
 SLIDER = ("""
         QSlider::groove:horizontal {
-        border: 1px solid #999999;
-        height: 15px;
-        border-radius: 9px;
+        border: 1px solid #bbb;
+        background: white;
+        height: 10px;
+        border-radius: 4px;
         }
 
-        QSlider::add-page:qlineargradient {
-        background: lightgrey;
-        border-top-right-radius: 9px;
-        border-bottom-right-radius: 9px;
-        border-top-left-radius: 0px;
-        border-bottom-left-radius: 0px;
+        QSlider::sub-page:horizontal {
+
+        background: QLinearGradient( x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #fff, stop: 0.4999 #eee, stop: 0.5 #ddd, stop: 1 #eee );
+        border: 1px solid #777;
+        height: 10px;
+        border-radius: 4px;
         }
 
-        QSlider::sub-page:qlineargradient {
-        background: #1f77b4;
-        border-top-right-radius: 0px;
-        border-bottom-right-radius: 0px;
-        border-top-left-radius: 9px;
-        border-bottom-left-radius: 9px;
+        QSlider::add-page:horizontal {
+        background: QLinearGradient( x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #78d, stop: 0.4999 #46a, stop: 0.5 #45a, stop: 1 #238 );
+        border: 1px solid #777;
+        height: 10px;
+        border-radius: 4px;
+        }
+
+        QSlider::handle:horizontal {
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+            stop:0 #eee, stop:1 #ccc);
+        border: 1px solid #777;
+        width: 13px;
+        margin-top: -2px;
+        margin-bottom: -2px;
+        border-radius: 4px;
+        }
+
+        QSlider::handle:horizontal:hover {
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+            stop:0 #fff, stop:1 #ddd);
+        border: 1px solid #444;
+        border-radius: 4px;
+        }
+
+        QSlider::sub-page:horizontal:disabled {
+        background: #bbb;
+        border-color: #999;
+        }
+
+        QSlider::add-page:horizontal:disabled {
+        background: #eee;
+        border-color: #999;
+        }
+
+        QSlider::handle:horizontal:disabled {
+        background: #eee;
+        border: 1px solid #aaa;
+        border-radius: 4px;
         }
         """)
 
 FORWARD_BUTTON  = ("""
-        background-color: #2ea44f;
+        background-color: #155644;
         border: 1px solid rgba(27, 31, 35, .15);
         border-radius: 6px;
         color: #fff;
@@ -94,5 +127,29 @@ LINE_EDIT = ("""
         font-size: 14px;
         border: 1px solid rgba(27, 31, 35, .15);
         line-height: 20px;
-        padding: 6px 16px;
+        padding: 6px 0px;
+""")
+
+TREE = ("""
+
+        QTreeView::branch:has-siblings:!adjoins-item {
+            
+        }
+
+        QTreeView::branch:has-siblings:adjoins-item {
+        }
+
+        QTreeView::branch:!has-children:!has-siblings:adjoins-item {
+        }
+
+        QTreeView::branch:has-children:!has-siblings:closed,
+        QTreeView::branch:closed:has-children:has-siblings {
+                border-image: none;
+        }
+
+        QTreeView::branch:open:has-children:!has-siblings,
+        QTreeView::branch:open:has-children:has-siblings  {
+                border-image: none;
+        }
+
 """)
