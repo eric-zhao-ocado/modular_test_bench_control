@@ -11,32 +11,16 @@ class MainWindow(QWidget):
         self.setWindowTitle("Induct Testbench Control  (v1.0.0-alpha)")
         self.setGeometry(0, 0, 1500, 800)
 
-        ### TEST ###
-        l1 = QTreeWidgetItem([ "String A",  "String B",  "String C" ])
-        l2 = QTreeWidgetItem([ "String AA", "String BB", "String CC" ])
-
-
-        for i in range(3):
-            l1_child = QTreeWidgetItem(["Child A" + str(i), "Child B" + str(i), "Child C" + str(i)])
-            l1.addChild(l1_child)
-
-        for j in range(2):
-            l2_child = QTreeWidgetItem(["Child AA" + str(j), "Child BB" + str(j), "Child CC" + str(j)])
-            l2.addChild(l2_child)
-
         tw = QTreeWidget()
-        tw.resize(500,200)
-        tw.setColumnCount(3)
-        tw.setHeaderLabels(["Column 1", "Column 2", "Column 3"])
-        tw.addTopLevelItem(l1)
-        tw.addTopLevelItem(l2)
+        tw.setColumnCount(4)
+        tw.setHeaderLabels(["Name", "Waypoint", "Acceleration", "Velocity"])
         tw.setStyleSheet(TREE)
-        ### TEST ###
 
-        ### super test ###
-    
-        ### super test ###
-        # sliders
+        sandbox_tree = QTreeWidget()
+        sandbox_tree.setColumnCount(1)
+        sandbox_tree.setStyleSheet(TREE)
+
+        
 
         # design 
         title=QFont()
@@ -51,8 +35,16 @@ class MainWindow(QWidget):
         onlyInt = QIntValidator()
         onlyInt.setRange(0, 180)
         onlyInt.setBottom(0)
-        
+
         # Waypoint Bank
+        tw_label = QLabel("Waypoints Bank")
+        tw_label.setFont(unbold)
+        
+        sandbox_label = QLabel("Sandbox")
+        sandbox_label.setFont(unbold)
+
+        
+        
         
         waypoint_tree = QRadioButton("RadioButton 1")
 
@@ -116,6 +108,27 @@ class MainWindow(QWidget):
         submit_name.setStyleSheet(LINE_EDIT)
         submit_start = QPushButton('Source')
         submit_start.setStyleSheet(BASIC_BUTTON)
+        def bank_update():
+            name = submit_name.text()
+            wp = '(' + x_value.text() + ',' + y_value.text() + ',' + z_value.text() + ')'
+            accel = str(accel_dial.value())
+            velocity = str(velocity_dial.value())
+            if accel == '0':
+                accel = '50'
+            if velocity == '0':
+                velocity = '50'
+
+            row = QTreeWidgetItem([name, wp, accel, velocity])
+            tw.addTopLevelItem(row)
+            
+        submit_start.clicked.connect(bank_update)
+        ##
+        # l1 = QTreeWidgetItem([ "String sldkfjslkdfjsklfjA",  "String B",  "String C" ])
+        # l2 = QTreeWidgetItem([ "String AA", "String BB", "String CC" ])
+        # tw.addTopLevelItem(l1)
+        # tw.addTopLevelItem(l2)
+
+
         submit_end = QPushButton('Destination')
         submit_end.setStyleSheet(BASIC_BUTTON)
         verticalSpacer = QSpacerItem(2, 20, QSizePolicy.Minimum)
@@ -220,8 +233,6 @@ class MainWindow(QWidget):
 
         configure_btn.clicked.connect(init_complete)
 
-        dimensions_label = QLabel("Item Dimensions (mm)")
-        dimensions_label.setFont(unbold)
 
         width_label = QLabel("w: ")
         width_label.setFont(unbold)
@@ -244,12 +255,13 @@ class MainWindow(QWidget):
         height_entry.setValidator(onlyInt)
 
         griper_label = QLabel("Gripper Limits (mm) :")
-        item_label = QLabel("Item dimensions (mm) :")
-        extended_label = QLabel("Extended Length: ")
+
+        item_label = QLabel("Item Dimensions (mm) :")
+        extended_label = QLabel("Extended: ")
         extended_label.setFont(unbold)
-        compressed_label = QLabel("Compressed Length")
+        compressed_label = QLabel("Compressed:")
         compressed_label.setFont(unbold)
-        max_width_label = QLabel("Max Width:")
+        max_width_label = QLabel("Max:")
         max_width_label.setFont(unbold)
 
         extended_entry = QLineEdit('')
@@ -264,6 +276,17 @@ class MainWindow(QWidget):
         max_width_entry.setStyleSheet(LINE_EDIT)
         max_width_entry.setAlignment(Qt.AlignCenter)
         max_width_entry.setValidator(onlyInt)
+
+        box = QRadioButton("Box")
+        box.setStyleSheet(SWITCH_BUTTON)
+        box.setEnabled(True)
+        bag = QRadioButton("Bag")
+        bag.setStyleSheet(SWITCH_BUTTON)
+        
+
+
+
+        item_type_label = QLabel("Item Type:")
 
         list_of_edits = [width_entry, length_entry, height_entry, extended_entry, compressed_entry, max_width_entry]
         
@@ -402,16 +425,13 @@ class MainWindow(QWidget):
         extended.addWidget(extended_label)
         extended.addItem(micro_horizontalSpacer)
         extended.addWidget(extended_entry)
-        compressed = QHBoxLayout()
+        extended.addWidget(compressed_label)
+        extended.addItem(micro_horizontalSpacer)
+        extended.addWidget(compressed_entry)
+        extended.addWidget(max_width_label)
+        extended.addItem(micro_horizontalSpacer)
+        extended.addWidget(max_width_entry)
         
-        compressed.addWidget(compressed_label)
-        compressed.addItem(micro_horizontalSpacer)
-        compressed.addWidget(compressed_entry)
-        max_width = QHBoxLayout()
-       
-        max_width.addWidget(max_width_label)
-        max_width.addItem(micro_horizontalSpacer)
-        max_width.addWidget(max_width_entry)
 
         cc_bot = QHBoxLayout()
         cc_bot.addLayout(box_width)
@@ -420,18 +440,23 @@ class MainWindow(QWidget):
         cc_bot.addItem(micro_horizontalSpacer)
         cc_bot.addLayout(box_height)
 
+        item_type = QHBoxLayout()
+        item_type.addWidget(box)
+        item_type.addWidget(bag)
+
         cc = QVBoxLayout()
         cc.addItem(micro_verticalSpacer)
         cc.addWidget(griper_label)
-        cc.addItem(micro_verticalSpacer)
+        
         cc.addLayout(extended)
-        cc.addLayout(compressed)
-        cc.addLayout(max_width)
+        cc.addItem(micro_verticalSpacer)
+        cc.addWidget(item_type_label)
+        cc.addLayout(item_type)
         cc.addItem(micro_verticalSpacer)
         cc.addItem(micro_verticalSpacer)
         cc.addWidget(item_label)
-        cc.addItem(micro_verticalSpacer)
         cc.addLayout(cc_bot)
+        cc.addItem(micro_verticalSpacer)
         cc.addItem(micro_verticalSpacer)
         cc.addItem(micro_verticalSpacer)
         
@@ -448,16 +473,24 @@ class MainWindow(QWidget):
         
         conveyor_controls.setLayout(conveyor)
 
-        bank = QHBoxLayout()
+        bank = QVBoxLayout()
+        bank.addWidget(tw_label)
         bank.addWidget(tw)
+        # bank.addWidget(tw2)
+
+        sandbox = QVBoxLayout()
+        sandbox.addWidget(sandbox_label)
+        sandbox.addWidget(sandbox_tree)
 
         bank_controls = QVBoxLayout()
         bank_controls.addWidget(waypoint_controls)
 
 
         tr = QHBoxLayout()
-        tr.addLayout(bank, stretch=2)
+        tr.addLayout(bank, stretch=3)
+        tr.addLayout(sandbox, stretch=3)
         tr.addLayout(bank_controls, stretch=1)
+        # tr.addLayout(bank_controls, stretch=1)
         top_row.setLayout(tr)
 
         static_calibrate = QVBoxLayout()
@@ -489,8 +522,6 @@ class MainWindow(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)  # event loop
-    font = QFont('Tahoma')
-    app.setFont(font)
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())

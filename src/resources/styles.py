@@ -61,7 +61,7 @@ FORWARD_BUTTON  = ("""
         border: 1px solid rgba(27, 31, 35, .15);
         border-radius: 6px;
         color: #fff;
-        
+        font-family: -apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
         font-size: 14px;
         font-weight: 600;
         line-height: 20px;
@@ -78,7 +78,7 @@ FORWARD_BUTTON  = ("""
         border: 1px solid rgba(27, 31, 35, .15);
         border-radius: 6px;
         color: #fff;
-        
+        font-family: -apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
         font-size: 14px;
         font-weight: 600;
         line-height: 20px;
@@ -98,7 +98,7 @@ BACKWARD_BUTTON  = ("""
         border: 1px solid rgba(27, 31, 35, .15);
         border-radius: 6px;
         color: #fff;
-        
+        font-family: -apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
         font-size: 14px;
         font-weight: 600;
         line-height: 20px;
@@ -115,7 +115,7 @@ BACKWARD_BUTTON  = ("""
         border: 1px solid rgba(27, 31, 35, .15);
         border-radius: 6px;
         color: #fff;
-        
+        font-family: -apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
         font-size: 14px;
         font-weight: 600;
         line-height: 20px;
@@ -143,7 +143,7 @@ BASIC_BUTTON = ("""
         color: #24292E;
         cursor: pointer;
         display: inline-block;
-        
+        font-family: -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
         font-size: 14px;
         font-weight: 500;
         line-height: 20px;
@@ -219,4 +219,49 @@ TREE = ("""
                 border-image: none;
         }
 
+""")
+
+SWITCH_BUTTON = ("""
+                
+                QPushButton:enabled {
+                background-color: #155644;
+                border: 1px solid rgba(27, 31, 35, .15);
+                border-radius: 6px;
+                color: #fff;
+                font-family: -apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
+                font-size: 14px;
+                font-weight: 600;
+                line-height: 20px;
+                padding: 6px 16px;
+                position: relative;
+                text-align: center;
+                text-decoration: none;
+                vertical-align: middle;
+                white-space: nowrap;
+                }
+
+                QPushButton:disabled {
+                appearance: none;
+                background-color: #FAFBFC;
+                border: 1px solid rgba(27, 31, 35, 0.15);
+                border-radius: 6px;
+                box-shadow: rgba(27, 31, 35, 0.04) 0 1px 0, rgba(255, 255, 255, 0.25) 0 1px 0 inset;
+                box-sizing: border-box;
+                color: #lightgray;
+                cursor: pointer;
+                display: inline-block;
+                font-size: 14px;
+                font-weight: 500;
+                line-height: 20px;
+                list-style: none;
+                padding: 6px 16px;
+                position: relative;
+                transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+                user-select: none;
+                -webkit-user-select: none;
+                touch-action: manipulation;
+                vertical-align: middle;
+                white-space: nowrap;
+                word-wrap: break-word;
+                }
 """)
