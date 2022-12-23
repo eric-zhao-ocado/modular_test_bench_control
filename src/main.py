@@ -19,6 +19,7 @@ import sys
 import csv
 
 from fanucpy import Robot
+from resources.import_functions import *
 
 import servo_conveyor
 import protos_x_control as px_ctrl
@@ -61,7 +62,6 @@ class MainWindow(QWidget):
         title.setBold(True)
         title.setPixelSize(16)
 
-        ROUTINE_MODULES = []
     
         unbold=QFont()
         unbold.setBold(False)
@@ -85,27 +85,43 @@ class MainWindow(QWidget):
         tw_submit = QPushButton("Select")
         tw_submit.setStyleSheet(FORWARD_BUTTON)
 
-        def add_routine():
-            for ix in tw.selectedIndexes():
-                text = ix.data(Qt.DisplayRole) # or ix.data()
-                ROUTINE_MODULES.append(str(text))
+        
+        drag = DragWidget(orientation=Qt.Orientation.Vertical)
 
-            # for n, l in enumerate(ROUTINE_MODULES):
-            #     item = DragItem(l)
-            #     item.set_data(n)  # Store the data.
-            #     row = QTreeWidgetItem(item)
-            #     sandbox_tree.addTopLevelItem(row)
-
-        tw_submit.clicked.connect(add_routine)
+        def refresh_sandbox(button_type):
+            ROUTINE_MODULES = []
+            if button_type == 'submit':
+                for ix in tw.selectedIndexes():
+                    text = ix.data(Qt.DisplayRole) # or ix.data()
+                    ROUTINE_MODULES.append(str(text))
+            elif button_type == 'kill':
+                ROUTINE_MODULES = []
+            elif button_type == 'blowoff':
+                ROUTINE_MODULES.append('blowoff')
+            elif button_type == 'pressure':
+                ROUTINE_MODULES.append('pressure')
+            elif button_type == 'delay':
+                ROUTINE_MODULES = []
+            
+            
+            for n, l in enumerate(ROUTINE_MODULES):
+                item = DragItem(l)
+                item.set_data(n)  # Store the data.
+                drag.add_item(item)
+        tw_submit.clicked.connect(lambda: refresh_sandbox('submit'))
 
         activate_vacuum = QPushButton("Vacuum")
         activate_vacuum.setStyleSheet(BASIC_BUTTON)
+        activate_vacuum.clicked.connect(lambda: refresh_sandbox('pressure'))
 
         deactivate_vacuum = QPushButton("Blow off")
         deactivate_vacuum.setStyleSheet(BASIC_BUTTON)
+        deactivate_vacuum.clicked.connect(lambda: refresh_sandbox('blowoff'))
 
         delay = QPushButton("Delay")
         delay.setStyleSheet(BASIC_BUTTON)
+        delay.clicked.connect(lambda: refresh_sandbox('delay'))
+
 
         run = QPushButton("Run")
         run.setStyleSheet(FORWARD_BUTTON)
@@ -115,10 +131,7 @@ class MainWindow(QWidget):
         stop = QPushButton("KILL")
         stop.setStyleSheet(BACKWARD_BUTTON)
 
-        def clear_routine():
-            ROUTINE_MODULES.clear()
-
-        stop.clicked.connect(clear_routine)
+        stop.clicked.connect(lambda: refresh_sandbox('kill'))
 
         # design 
         title=QFont()
@@ -442,6 +455,14 @@ class MainWindow(QWidget):
         compressed_entry.textChanged.connect(lambda: update_int(compress_gripr_len, compressed_entry.text()))
         max_width_entry.textChanged.connect(lambda: update_int(gripr_rad, max_width_entry.text()))
 
+        scroll = QScrollArea()
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(drag)
+        
+        
+
         # Joint Limits
         joint_limits = QGroupBox("Joint Limits")
 
@@ -618,7 +639,7 @@ class MainWindow(QWidget):
         # bank.addWidget(tw2)
 
         sandbox = QVBoxLayout()
-        sandbox.addWidget(sandbox_tree)
+        sandbox.addWidget(scroll)
 
 
         finite_runs = QHBoxLayout()
