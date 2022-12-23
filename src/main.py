@@ -94,8 +94,9 @@ class MainWindow(QWidget):
         
         drag = DragWidget(orientation=Qt.Orientation.Vertical)
 
+        ROUTINE_MODULES = []
         def refresh_sandbox(button_type):
-            ROUTINE_MODULES = []
+            nonlocal ROUTINE_MODULES
             
             if button_type == 'submit':
                 format_list = []
@@ -120,8 +121,9 @@ class MainWindow(QWidget):
                 item.set_data(n)  # Store the data.
                 drag.add_item(item)
             
-            print(ROUTINE_MODULES)
+            return ROUTINE_MODULES
             
+        
         tw_submit.clicked.connect(lambda: refresh_sandbox('submit'))
 
         activate_vacuum = QPushButton("Vacuum")
@@ -242,7 +244,7 @@ class MainWindow(QWidget):
         z_value.setFont(title)
         z_value.setStyleSheet('color: deeppink')
 
-        submit_name = QLineEdit('waypoint name')
+        submit_name = QLineEdit('waypoint_name')
         submit_name.setStyleSheet(LINE_EDIT)
         submit_start = QPushButton('Source')
         submit_start.setStyleSheet(BASIC_BUTTON)
