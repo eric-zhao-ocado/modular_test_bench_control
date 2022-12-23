@@ -26,10 +26,13 @@ import sure_servo_2_constants as sv2_cnst
 import yaskawa_vfd_control as vfd_ctrl
 import test_bench_constants as tb_cnst
 
+protos_x = px_ctrl.ProtosX(tb_cnst.PROTOS_X_HOST)
+
 class MainWindow(QWidget):
     def __init__(
         self,
-        # conveyor_paths,
+        conveyor_paths,
+        pick_pos_mon,
         next_stage_event,
         arm_mover,
         paths,
@@ -68,18 +71,99 @@ class MainWindow(QWidget):
         onlyInt.setRange(0, 180)
         onlyInt.setBottom(0)
         
-        tw = QTreeWidget()
-        tw.setColumnCount(4)
-        tw.setHeaderLabels(["Name", "Waypoint", "Acceleration", "Velocity"])
-        tw.setStyleSheet(TREE)
+        configure_btn = QPushButton('Configure')
+        configure_btn.setStyleSheet(BASIC_BUTTON)
+
+        def init_complete():
+            calibration.setEnabled(False)
+            next_stage_event.set()
+            next_stage_event.clear()
+            print("waiting")
+            next_stage_event.wait()
+            conveyor_controls.setEnabled(True)
+
+        configure_btn.clicked.connect(init_complete)
         
+        dimensions_label = QLabel("Item Dimensions (mm)")
+        dimensions_label.setFont(unbold)
+
+        width_label = QLabel("w: ")
+        width_label.setFont(unbold)
+        length_label = QLabel("l:")
+        length_label.setFont(unbold)
+        height_label = QLabel("h:")
+        height_label.setFont(unbold)
+
+        width_entry = QLineEdit('')
+        width_entry.setStyleSheet(LINE_EDIT)
+        width_entry.setAlignment(Qt.AlignCenter)
+        width_entry.setValidator(onlyInt)
+        length_entry = QLineEdit('')
+        length_entry.setStyleSheet(LINE_EDIT)
+        length_entry.setAlignment(Qt.AlignCenter)
+        length_entry.setValidator(onlyInt)
+        height_entry = QLineEdit('')
+        height_entry.setStyleSheet(LINE_EDIT)
+        height_entry.setAlignment(Qt.AlignCenter)
+        height_entry.setValidator(onlyInt)
+
+        griper_label = QLabel("Gripper Limits (mm) :")
+        item_label = QLabel("Item dimensions (mm) :")
+        extended_label = QLabel("Extended Length: ")
+        extended_label.setFont(unbold)
+        compressed_label = QLabel("Compressed Length")
+        compressed_label.setFont(unbold)
+        max_width_label = QLabel("Max Width:")
+        max_width_label.setFont(unbold)
+
+        extended_entry = QLineEdit('')
+        extended_entry.setStyleSheet(LINE_EDIT)
+        extended_entry.setAlignment(Qt.AlignCenter)
+        extended_entry.setValidator(onlyInt)
+        compressed_entry = QLineEdit('')
+        compressed_entry.setStyleSheet(LINE_EDIT)
+        compressed_entry.setAlignment(Qt.AlignCenter)
+        compressed_entry.setValidator(onlyInt)
+        max_width_entry = QLineEdit('')
+        max_width_entry.setStyleSheet(LINE_EDIT)
+        max_width_entry.setAlignment(Qt.AlignCenter)
+        max_width_entry.setValidator(onlyInt)
+
+        list_of_edits = [width_entry, length_entry, height_entry, extended_entry, compressed_entry, max_width_entry]
+        
+        def edit_text_changed(self):
+            for input in list_of_edits:
+                if input.text() == '':
+                    configure_btn.setEnabled(False)
+                    return
+                else:
+                    configure_btn.setEnabled(True)
+
+        configure_btn.setEnabled(False)
+        for input in list_of_edits:
+            input.textChanged.connect(edit_text_changed)
+        def update_int(num, new_value):
+            if new_value != '':
+                num.value = int(new_value)
+        width_entry.textChanged.connect(lambda: update_int(width, width_entry.text()))
+        length_entry.textChanged.connect(lambda: update_int(length, length_entry.text()))
+        height_entry.textChanged.connect(lambda: update_int(height, height_entry.text()))
+        extended_entry.textChanged.connect(lambda: update_int(gripr_len, extended_entry.text()))
+        compressed_entry.textChanged.connect(lambda: update_int(compress_gripr_len, compressed_entry.text()))
+        max_width_entry.textChanged.connect(lambda: update_int(gripr_rad, max_width_entry.text()))
+
         ### TEST ###
         l1 = QTreeWidgetItem([ "String A",  "String B",  "String C" ])
         l2 = QTreeWidgetItem([ "String AA", "String BB", "String CC" ])
 
-        sandbox_tree = QTreeWidget()
-        sandbox_tree.setColumnCount(1)
-        sandbox_tree.setStyleSheet(TREE)
+
+        for i in range(3):
+            l1_child = QTreeWidgetItem(["Child A" + str(i), "Child B" + str(i), "Child C" + str(i)])
+            l1.addChild(l1_child)
+
+        for j in range(2):
+            l2_child = QTreeWidgetItem(["Child AA" + str(j), "Child BB" + str(j), "Child CC" + str(j)])
+            l2.addChild(l2_child)
 
         tw = QTreeWidget()
         tw.resize(500,200)
@@ -95,29 +179,7 @@ class MainWindow(QWidget):
         ### super test ###
         # sliders
         
-        # design 
-        title=QFont()
-        title.setBold(True)
-        title.setPixelSize(16)
-    
-        unbold=QFont()
-        unbold.setBold(False)
-        #title.setPixelSize()
-        
-        # allow only integers
-        onlyInt = QIntValidator()
-        onlyInt.setRange(0, 180)
-        onlyInt.setBottom(0)
-        
         # Waypoint Bank
-        tw_label = QLabel("Waypoints Bank")
-        tw_label.setFont(unbold)
-        
-        sandbox_label = QLabel("Sandbox")
-        sandbox_label.setFont(unbold)
-
-        
-        
         
         waypoint_tree = QRadioButton("RadioButton 1")
 
@@ -193,27 +255,6 @@ class MainWindow(QWidget):
         submit_name.setStyleSheet(LINE_EDIT)
         submit_start = QPushButton('Source')
         submit_start.setStyleSheet(BASIC_BUTTON)
-        def bank_update():
-            name = submit_name.text()
-            wp = '(' + x_value.text() + ',' + y_value.text() + ',' + z_value.text() + ')'
-            accel = str(accel_dial.value())
-            velocity = str(velocity_dial.value())
-            if accel == '0':
-                accel = '50'
-            if velocity == '0':
-                velocity = '50'
-
-            row = QTreeWidgetItem([name, wp, accel, velocity])
-            tw.addTopLevelItem(row)
-            
-        submit_start.clicked.connect(bank_update)
-        ##
-        # l1 = QTreeWidgetItem([ "String sldkfjslkdfjsklfjA",  "String B",  "String C" ])
-        # l2 = QTreeWidgetItem([ "String AA", "String BB", "String CC" ])
-        # tw.addTopLevelItem(l1)
-        # tw.addTopLevelItem(l2)
-
-
         submit_end = QPushButton('Destination')
         submit_end.setStyleSheet(BASIC_BUTTON)
         verticalSpacer = QSpacerItem(2, 20, QSizePolicy.Minimum)
@@ -296,13 +337,13 @@ class MainWindow(QWidget):
 
         forward_btn = QPushButton('Forward')
         forward_btn.setStyleSheet(FORWARD_BUTTON)
-        # forward_btn.pressed.connect(lambda: jog_servo("Forward", conveyor_paths["jog_path"], 50, jog_conveyor_event))
-        # forward_btn.released.connect(lambda: conveyor_paths["fast_stop"].trigger_path())
+        forward_btn.pressed.connect(lambda: jog_servo("Forward", conveyor_paths["jog_path"], 50, jog_conveyor_event))
+        forward_btn.released.connect(lambda: conveyor_paths["fast_stop"].trigger_path())
         
         backward_btn = QPushButton('Backward')
         backward_btn.setStyleSheet(BACKWARD_BUTTON)
-        # backward_btn.pressed.connect(lambda: jog_servo("Backward", conveyor_paths["jog_path"], 50, jog_conveyor_event))
-        # backward_btn.released.connect(lambda: conveyor_paths["fast_stop"].trigger_path())
+        backward_btn.pressed.connect(lambda: jog_servo("Backward", conveyor_paths["jog_path"], 50, jog_conveyor_event))
+        backward_btn.released.connect(lambda: conveyor_paths["fast_stop"].trigger_path())
 
         reset_btn = QPushButton('Reset')
         reset_btn.setStyleSheet(BASIC_BUTTON)
@@ -329,102 +370,7 @@ class MainWindow(QWidget):
             dynamic_controls.setEnabled(True)
             next_stage_event.set()
         set_btn.clicked.connect(lambda: set_conveyor())
-        
-        configure_btn = QPushButton('Configure')
-        configure_btn.setStyleSheet(BASIC_BUTTON)
 
-        def init_complete():
-            calibration.setEnabled(False)
-            # NOTE COMMENTED OUT FOR OFFLINE
-            # next_stage_event.set()
-            # next_stage_event.clear()
-            # next_stage_event.wait()
-            conveyor_controls.setEnabled(True)
-
-        configure_btn.clicked.connect(init_complete)
-        
-        dimensions_label = QLabel("Item Dimensions (mm)")
-        dimensions_label.setFont(unbold)
-
-        width_label = QLabel("w: ")
-        width_label.setFont(unbold)
-        length_label = QLabel("l:")
-        length_label.setFont(unbold)
-        height_label = QLabel("h:")
-        height_label.setFont(unbold)
-
-        width_entry = QLineEdit('')
-        width_entry.setStyleSheet(LINE_EDIT)
-        width_entry.setAlignment(Qt.AlignCenter)
-        width_entry.setValidator(onlyInt)
-        length_entry = QLineEdit('')
-        length_entry.setStyleSheet(LINE_EDIT)
-        length_entry.setAlignment(Qt.AlignCenter)
-        length_entry.setValidator(onlyInt)
-        height_entry = QLineEdit('')
-        height_entry.setStyleSheet(LINE_EDIT)
-        height_entry.setAlignment(Qt.AlignCenter)
-        height_entry.setValidator(onlyInt)
-
-        griper_label = QLabel("Gripper Limits (mm) :")
-
-        item_label = QLabel("Item Dimensions (mm) :")
-        extended_label = QLabel("Extended: ")
-        extended_label.setFont(unbold)
-        compressed_label = QLabel("Compressed:")
-        compressed_label.setFont(unbold)
-        max_width_label = QLabel("Max:")
-        max_width_label.setFont(unbold)
-
-        extended_entry = QLineEdit('')
-        extended_entry.setStyleSheet(LINE_EDIT)
-        extended_entry.setAlignment(Qt.AlignCenter)
-        extended_entry.setValidator(onlyInt)
-        compressed_entry = QLineEdit('')
-        compressed_entry.setStyleSheet(LINE_EDIT)
-        compressed_entry.setAlignment(Qt.AlignCenter)
-        compressed_entry.setValidator(onlyInt)
-        max_width_entry = QLineEdit('')
-        max_width_entry.setStyleSheet(LINE_EDIT)
-        max_width_entry.setAlignment(Qt.AlignCenter)
-        max_width_entry.setValidator(onlyInt)
-
-        box = QRadioButton("Box")
-        box.setStyleSheet(SWITCH_BUTTON)
-        box.setEnabled(True)
-        def box_bag_handler(parcel, box, bag):
-            if box.isChecked():
-                parcel.value = 0
-            elif bag.isChecked():
-                parcel.value = 1
-        bag = QRadioButton("Bag")
-        bag.setStyleSheet(SWITCH_BUTTON)
-        box.toggled.connect(lambda: box_bag_handler(parcel, box, bag))
-
-        item_type_label = QLabel("Item Type:")
-
-        list_of_edits = [width_entry, length_entry, height_entry, extended_entry, compressed_entry, max_width_entry]
-        
-        def edit_text_changed(self):
-            for input in list_of_edits:
-                if input.text() == '':
-                    configure_btn.setEnabled(False)
-                    return
-                else:
-                    configure_btn.setEnabled(True)
-
-        configure_btn.setEnabled(False)
-        for input in list_of_edits:
-            input.textChanged.connect(edit_text_changed)
-        def update_int(num, new_value):
-            if new_value != '':
-                num.value = int(new_value)
-        width_entry.textChanged.connect(lambda: update_int(width, width_entry.text()))
-        length_entry.textChanged.connect(lambda: update_int(length, length_entry.text()))
-        height_entry.textChanged.connect(lambda: update_int(height, height_entry.text()))
-        extended_entry.textChanged.connect(lambda: update_int(gripr_len, extended_entry.text()))
-        compressed_entry.textChanged.connect(lambda: update_int(compress_gripr_len, compressed_entry.text()))
-        max_width_entry.textChanged.connect(lambda: update_int(gripr_rad, max_width_entry.text()))
 
         # Joint Limits
         joint_limits = QGroupBox("Joint Limits")
@@ -548,13 +494,16 @@ class MainWindow(QWidget):
         extended.addWidget(extended_label)
         extended.addItem(micro_horizontalSpacer)
         extended.addWidget(extended_entry)
-        extended.addWidget(compressed_label)
-        extended.addItem(micro_horizontalSpacer)
-        extended.addWidget(compressed_entry)
-        extended.addWidget(max_width_label)
-        extended.addItem(micro_horizontalSpacer)
-        extended.addWidget(max_width_entry)
+        compressed = QHBoxLayout()
         
+        compressed.addWidget(compressed_label)
+        compressed.addItem(micro_horizontalSpacer)
+        compressed.addWidget(compressed_entry)
+        max_width = QHBoxLayout()
+       
+        max_width.addWidget(max_width_label)
+        max_width.addItem(micro_horizontalSpacer)
+        max_width.addWidget(max_width_entry)
 
         cc_bot = QHBoxLayout()
         cc_bot.addLayout(box_width)
@@ -563,23 +512,18 @@ class MainWindow(QWidget):
         cc_bot.addItem(micro_horizontalSpacer)
         cc_bot.addLayout(box_height)
 
-        item_type = QHBoxLayout()
-        item_type.addWidget(box)
-        item_type.addWidget(bag)
-
         cc = QVBoxLayout()
         cc.addItem(micro_verticalSpacer)
         cc.addWidget(griper_label)
-        
-        cc.addLayout(extended)
         cc.addItem(micro_verticalSpacer)
-        cc.addWidget(item_type_label)
-        cc.addLayout(item_type)
+        cc.addLayout(extended)
+        cc.addLayout(compressed)
+        cc.addLayout(max_width)
         cc.addItem(micro_verticalSpacer)
         cc.addItem(micro_verticalSpacer)
         cc.addWidget(item_label)
-        cc.addLayout(cc_bot)
         cc.addItem(micro_verticalSpacer)
+        cc.addLayout(cc_bot)
         cc.addItem(micro_verticalSpacer)
         cc.addItem(micro_verticalSpacer)
         
@@ -596,24 +540,16 @@ class MainWindow(QWidget):
         
         conveyor_controls.setLayout(conveyor)
 
-        bank = QVBoxLayout()
-        bank.addWidget(tw_label)
+        bank = QHBoxLayout()
         bank.addWidget(tw)
-        # bank.addWidget(tw2)
-
-        sandbox = QVBoxLayout()
-        sandbox.addWidget(sandbox_label)
-        sandbox.addWidget(sandbox_tree)
 
         bank_controls = QVBoxLayout()
         bank_controls.addWidget(waypoint_controls)
 
 
         tr = QHBoxLayout()
-        tr.addLayout(bank, stretch=3)
-        tr.addLayout(sandbox, stretch=3)
+        tr.addLayout(bank, stretch=2)
         tr.addLayout(bank_controls, stretch=1)
-        # tr.addLayout(bank_controls, stretch=1)
         top_row.setLayout(tr)
 
         static_calibrate = QVBoxLayout()
@@ -673,7 +609,6 @@ def exit_routine(
     servo.exit_handler()
     print("Stopping vfd...")
     vfd.exit_handler()
-    sys.exit(0)
 
 def check_ready():
     """
@@ -783,10 +718,9 @@ def move_arm(
                 print(repr(exception))
         # Clear the move arm event.
         move_arm_event.clear()
-    print("arm")
     quit_event.set()
     robot.disconnect()
-    quit()
+    sys.exit(0)
 
 def pick_conveyor_init():
     """
@@ -890,6 +824,7 @@ def add_point(paths, arm_mover, vel, acc):
         arm_mover: Array containing coordinates of arm.
     """
     paths.append(["WAYPOINT", arm_mover[:], vel.value, acc.value])
+    print(paths)
 
 def add_vacuum(paths, index):
     """
@@ -988,7 +923,8 @@ def rotate_45_deg(old_x, old_y):
     return new_x, new_y
 
 def gui_app(
-    # conveyor_paths,
+    conveyor_paths,
+    pick_pos_mon,
     next_stage_event,
     arm_mover,
     paths,
@@ -1006,7 +942,6 @@ def gui_app(
     length,
     gripr_len,
     gripr_rad,
-    quit_event,
 ):
     """
     Process for running the GUI.
@@ -1015,7 +950,8 @@ def gui_app(
     font = QFont('Tahoma')
     app.setFont(font)
     window = MainWindow(
-        # conveyor_paths,
+        conveyor_paths,
+        pick_pos_mon,
         next_stage_event,
         arm_mover,
         paths,
@@ -1035,10 +971,135 @@ def gui_app(
         gripr_rad,
     )
     window.show()
-    code=app.exec_()
-    quit_event.set()
+    sys.exit(app.exec_())
+    
+    # Create window to jog the conveyor.
+    jog_conveyor_window = tkinter.Tk()
+    jog_conveyor_window.attributes("-topmost", True)
+    jog_conveyor_window.lift()
+
+    for test_direction in ("Forward", "Backward"):
+        button = tkinter.Button(jog_conveyor_window, text=test_direction)
+        button.pack(side=tkinter.LEFT)
+        button.bind('<ButtonPress-1>', lambda event, dir=test_direction:
+            jog_servo(dir, conveyor_paths["jog_path"], 50, jog_conveyor_event))
+        button.bind(
+            '<ButtonRelease-1>',
+            lambda event: conveyor_paths["fast_stop"].trigger_path()
+        )
+
+    button = tkinter.Button(jog_conveyor_window, text= "Set end")
+    button.pack(side = tkinter.LEFT)
+    button.bind(
+        '<ButtonPress-1>',
+        lambda event: save_end_point(
+            conveyor_paths["forwards_distance"],
+            pick_pos_mon.check_value(),
+            next_stage_event
+        )
+    )
+
+    while not next_stage_event.is_set():
+        jog_conveyor_window.update_idletasks()
+        jog_conveyor_window.update()
+    jog_conveyor_window.destroy()
+
+    # Window to jog the arm and save waypoints.
+    jog_arm_window = tkinter.Tk()
+    jog_arm_window.attributes("-topmost", True)
+    jog_arm_window.lift()
+
+    # X coordinate slider.
+    x_pos = tkinter.Scale(
+        jog_arm_window,
+        from_=min_arm_x + 0.001, to=max_arm_x,
+        orient=tkinter.HORIZONTAL,
+        resolution=0.001,
+        length=500
+    )
+    x_pos.pack()
+    # Calculate slider starting value (current position of arm)
+    x_pos.set((arm_mover[1] + arm_mover[0])/ (2.0 ** 0.5) + tb_cnst.X_OFFSET)
+
+    # Y coordinate slider.
+    y_pos = tkinter.Scale(
+        jog_arm_window,
+        from_=0, to=900,
+        orient=tkinter.HORIZONTAL,
+        resolution=0.001,
+        length=500
+    )
+    y_pos.pack()
+    # Calculate slider starting value (current position of arm)
+    y_pos.set((arm_mover[1] - arm_mover[0]) / (2.0 ** 0.5) + tb_cnst.Y_OFFSET)
+
+    # Z coordinate slider.
+    z_pos = tkinter.Scale(
+        jog_arm_window,
+        from_=tb_cnst.MIN_Z + compress_gripr_len + height,
+        to=tb_cnst.MAX_Z,
+        orient=tkinter.HORIZONTAL,
+        resolution=0.001,
+        length=500
+    )
+    z_pos.pack()
+    z_pos.set(arm_mover[2])
+
+    vel_slider = tkinter.Scale(
+        jog_arm_window,
+        from_=1,
+        to=100,
+        orient=tkinter.HORIZONTAL,
+        resolution=1,
+        length=500
+    )
+    vel_slider.pack()
+    vel_slider.set(1)
+
+    acc_slider = tkinter.Scale(
+        jog_arm_window,
+        from_=1,
+        to=100,
+        orient=tkinter.HORIZONTAL,
+        resolution=1,
+        length=500
+    )
+    acc_slider.pack()
+    acc_slider.set(1)
+
+    # Button to save current position as a point.
+    button = tkinter.Button(jog_arm_window, text= "Save point")
+    button.pack(side = tkinter.LEFT)
+    button.bind('<ButtonPress-1>', lambda event: add_point(paths, arm_mover, vel, acc))
+    # Button to add a Vacuum ON point.
+    button = tkinter.Button(jog_arm_window, text= "Vacuum")
+    button.pack(side = tkinter.LEFT)
+    button.bind('<ButtonPress-1>', lambda event: add_vacuum(paths, 1))
+    # Button to add a blow-off point.
+    button = tkinter.Button(jog_arm_window, text= "Blow-off")
+    button.pack(side = tkinter.LEFT)
+    button.bind('<ButtonPress-1>', lambda event: add_blowoff(paths))
+    # Button to start the automated routine.
+    button = tkinter.Button(jog_arm_window, text= "Start")
+    button.pack(side = tkinter.LEFT)
+    button.bind('<ButtonPress-1>', lambda event: next_stage_event.set())
+
+    coord_sliders[0] = x_pos.get()
+    coord_sliders[1] = y_pos.get()
+    coord_sliders[2] = z_pos.get()
+
     next_stage_event.set()
-    sys.exit(code)
+    next_stage_event.clear()
+
+    while not next_stage_event.is_set():
+        jog_arm_window.update_idletasks()
+        jog_arm_window.update()
+        coord_sliders[0] = x_pos.get()
+        coord_sliders[1] = y_pos.get()
+        coord_sliders[2] = z_pos.get()
+        vel.value = vel_slider.get()
+        acc.value = acc_slider.get()
+    jog_arm_window.destroy()
 
 
 def automated_routine():
@@ -1046,11 +1107,9 @@ def automated_routine():
     Routine for automating the testing of grippers on parcels.
     """
     # Initial initialization
-    
-    # protos_x = px_ctrl.ProtosX(tb_cnst.PROTOS_X_HOST)
-    # pick_conveyor, pick_speed_mon, pick_pos_mon = pick_conveyor_init()
-    # conveyor_paths = pick_conveyor.path_dict
-    # feed_conveyor = feed_conveyor_init()
+    pick_conveyor, pick_speed_mon, pick_pos_mon = pick_conveyor_init()
+    conveyor_paths = pick_conveyor.path_dict
+    feed_conveyor = feed_conveyor_init()
 
 
     # Initialize events.
@@ -1078,20 +1137,21 @@ def automated_routine():
     paths = manager.list()
     coord_sliders = mp.Array('d', range(3))
 
-    # atexit.register(
-    #     exit_routine,
-    #     protos_x=protos_x,
-    #     servo=pick_conveyor.servo,
-    #     vfd=feed_conveyor,
-    #     paths=conveyor_paths,
-    #     pick_speed_mon=pick_speed_mon,
-    #     quit_event=quit_event,
-    # )
+    atexit.register(
+        exit_routine,
+        protos_x=protos_x,
+        servo=pick_conveyor.servo,
+        vfd=feed_conveyor,
+        paths=conveyor_paths,
+        pick_speed_mon=pick_speed_mon,
+        quit_event=quit_event,
+    )
     
     gui_process = mp.Process(
         target=gui_app,
         args=(
-            # conveyor_paths,
+            conveyor_paths,
+            pick_pos_mon,
             next_stage_event,
             arm_mover,
             paths,
@@ -1109,20 +1169,17 @@ def automated_routine():
             length,
             gripr_len,
             gripr_rad,
-            quit_event,
         )
     )
     gui_process.start()
-    # NOTE FOR OFFLINE TESTING ONLY \/\/\/\/
-    quit_event.wait()
-    sys.exit(0)
-    # OFFLINE ONLY ^^
+    
     next_stage_event.wait()
 
     # NOTE: TESTING PURPOSES ONLY, need dynamic value
     gripr_len.value = 335
     compress_gripr_len.value = 265
     gripr_rad.value = 74
+
 
     # Calculate the origin of the gripper
     # Makes sure the gripper doesn't hit the guards
@@ -1149,8 +1206,6 @@ def automated_routine():
     )
     arm_process.start()
 
-    if quit_event.is_set():
-        sys.exit(0)
     move_arm_event.set()
     
     # Move package and arm to the starting point
@@ -1167,7 +1222,7 @@ def automated_routine():
     max_conveyor_pos = (tb_cnst.MAX_X - default_origin[0]) * (2 ** 0.5) - half_diagonal
     max_grip_conv_pos = max_conveyor_pos - gripr_rad.value + 61
     # Check to ensure box does not hit conveyor guards
-    if long_diagonal > 184 and parcel == 0:
+    if long_diagonal > 184 and parcel == 'x':
         max_conveyor_pos = max_conveyor_pos - (long_diagonal - 183 / 2) / 2 \
             - ((length - width) / (2 ** 0.5)) * 2.6
     # Check to ensure gripper does not hit conveyor guards.
@@ -1184,8 +1239,8 @@ def automated_routine():
     )
     max_arm_x.value = pick_conveyor.turn_circum * max_conveyor_pos / sv2_cnst.E_GEAR_DEN + half_diagonal
     min_arm_x.value = (arm_origin_x + arm_origin_y) / (2.0 ** 0.5) + tb_cnst.X_OFFSET
-    vel.value = 100
-    accel.value = 100
+    vel.value = 1
+    accel.value = 1
     
     min_conveyor_pos = round(sv2_cnst.E_GEAR_DEN * (2 ** 0.5 * (arm_origin_x - default_origin[0])-half_diagonal) / pick_conveyor.turn_circum) + 1000
     pick_conveyor.add_point_point_path(
@@ -1195,8 +1250,6 @@ def automated_routine():
     next_stage_event.clear()
     # Loop to jog the conveyor.
     while not next_stage_event.is_set():
-        if quit_event.is_set():
-            sys.exit(0)
         # Move arm to current set position
         move_arm_event.set()
         # Get conveyor position
@@ -1232,12 +1285,7 @@ def automated_routine():
             arm_mover[0] = default_origin[0] + (distance + half_diagonal) / 2 ** 0.5
             arm_mover[1] = default_origin[1] + (distance + half_diagonal) / 2 ** 0.5
     next_stage_event.clear()
-    
-    vel.value = 1
-    accel.value = 1
     while not next_stage_event.is_set():
-        if quit_event.is_set():
-            sys.exit(0)
         arm_mover[0], arm_mover[1] = rotate_45_deg(coord_sliders[0], coord_sliders[1])
         arm_mover[2] = coord_sliders[2]
         move_arm_event.set()
@@ -1254,8 +1302,6 @@ def automated_routine():
     start_time = time.perf_counter()
     cycle_num = 1
     while cycle_num <= cycles:
-        if quit_event.is_set():
-            sys.exit(0)
         # Wait for package to be detected.
         reset_parcel(conveyor_paths, protos_x, pick_speed_mon)
         time.sleep(0.2)
