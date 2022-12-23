@@ -26,13 +26,13 @@ import sure_servo_2_constants as sv2_cnst
 import yaskawa_vfd_control as vfd_ctrl
 import test_bench_constants as tb_cnst
 
-protos_x = px_ctrl.ProtosX(tb_cnst.PROTOS_X_HOST)
+# protos_x = px_ctrl.ProtosX(tb_cnst.PROTOS_X_HOST)
 
 class MainWindow(QWidget):
     def __init__(
         self,
-        conveyor_paths,
-        pick_pos_mon,
+        # conveyor_paths,
+        # pick_pos_mon,
         next_stage_event,
         arm_mover,
         paths,
@@ -383,12 +383,12 @@ class MainWindow(QWidget):
         forward_btn = QPushButton('Forward')
         forward_btn.setStyleSheet(FORWARD_BUTTON)
         forward_btn.pressed.connect(lambda: jog_servo("Forward", conveyor_paths["jog_path"], 50, jog_conveyor_event))
-        forward_btn.released.connect(lambda: conveyor_paths["fast_stop"].trigger_path())
+        # forward_btn.released.connect(lambda: conveyor_paths["fast_stop"].trigger_path())
         
         backward_btn = QPushButton('Backward')
         backward_btn.setStyleSheet(BACKWARD_BUTTON)
         backward_btn.pressed.connect(lambda: jog_servo("Backward", conveyor_paths["jog_path"], 50, jog_conveyor_event))
-        backward_btn.released.connect(lambda: conveyor_paths["fast_stop"].trigger_path())
+        # backward_btn.released.connect(lambda: conveyor_paths["fast_stop"].trigger_path())
 
         reset_btn = QPushButton('Reset')
         reset_btn.setStyleSheet(BASIC_BUTTON)
@@ -1129,8 +1129,8 @@ def rotate_45_deg(old_x, old_y):
     return new_x, new_y
 
 def gui_app(
-    conveyor_paths,
-    pick_pos_mon,
+    # conveyor_paths,
+    # pick_pos_mon,
     next_stage_event,
     arm_mover,
     paths,
@@ -1156,8 +1156,8 @@ def gui_app(
     font = QFont('Tahoma')
     app.setFont(font)
     window = MainWindow(
-        conveyor_paths,
-        pick_pos_mon,
+        # conveyor_paths,
+        # pick_pos_mon,
         next_stage_event,
         arm_mover,
         paths,
@@ -1313,9 +1313,9 @@ def automated_routine():
     Routine for automating the testing of grippers on parcels.
     """
     # Initial initialization
-    pick_conveyor, pick_speed_mon, pick_pos_mon = pick_conveyor_init()
-    conveyor_paths = pick_conveyor.path_dict
-    feed_conveyor = feed_conveyor_init()
+    # pick_conveyor, pick_speed_mon, pick_pos_mon = pick_conveyor_init()
+    # conveyor_paths = pick_conveyor.path_dict
+    # feed_conveyor = feed_conveyor_init()
 
 
     # Initialize events.
@@ -1343,21 +1343,21 @@ def automated_routine():
     paths = manager.list()
     coord_sliders = mp.Array('d', range(3))
 
-    atexit.register(
-        exit_routine,
-        protos_x=protos_x,
-        servo=pick_conveyor.servo,
-        vfd=feed_conveyor,
-        paths=conveyor_paths,
-        pick_speed_mon=pick_speed_mon,
-        quit_event=quit_event,
-    )
+    # atexit.register(
+    #     exit_routine,
+    #     protos_x=protos_x,
+    #     servo=pick_conveyor.servo,
+    #     vfd=feed_conveyor,
+    #     paths=conveyor_paths,
+    #     pick_speed_mon=pick_speed_mon,
+    #     quit_event=quit_event,
+    # )
     
     gui_process = mp.Process(
         target=gui_app,
         args=(
-            conveyor_paths,
-            pick_pos_mon,
+            # conveyor_paths,
+            # pick_pos_mon,
             next_stage_event,
             arm_mover,
             paths,
@@ -1378,6 +1378,9 @@ def automated_routine():
         )
     )
     gui_process.start()
+    
+    while True:
+        pass
     
     next_stage_event.wait()
 
