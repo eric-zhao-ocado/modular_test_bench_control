@@ -34,7 +34,9 @@ class MainWindow(QWidget):
         tw.setStyleSheet(TREE)
         ### TEST ###
 
-
+        ### super test ###
+    
+        ### super test ###
         # sliders
 
         # design 
@@ -180,6 +182,9 @@ class MainWindow(QWidget):
             sc_x_val.setText("{}".format(x_slider.value()))
             sc_y_val.setText("{}".format(y_slider.value()))
             sc_z_val.setText("{}".format(z_slider.value()))
+            x_static.setText(str(x_slider.value()))
+            y_static.setText(str(y_slider.value()))
+            z_static.setText(str(z_slider.value()))
 
         check_joint_limits.clicked.connect(joint_limits)
 
@@ -215,8 +220,6 @@ class MainWindow(QWidget):
             calibration.setEnabled(False)
 
         configure_btn.clicked.connect(init_complete)
-
-
 
         dimensions_label = QLabel("Item Dimensions (mm)")
         dimensions_label.setFont(unbold)
@@ -263,7 +266,19 @@ class MainWindow(QWidget):
         max_width_entry.setAlignment(Qt.AlignCenter)
         max_width_entry.setValidator(onlyInt)
 
-      
+        list_of_edits = [width_entry, length_entry, height_entry, extended_entry, compressed_entry, max_width_entry]
+        
+        def edit_text_changed(self):
+            for input in list_of_edits:
+                if input.text() == '':
+                    configure_btn.setEnabled(False)
+                    return
+                else:
+                    configure_btn.setEnabled(True)
+
+        configure_btn.setEnabled(False)
+        for input in list_of_edits:
+            input.textChanged.connect(edit_text_changed)
 
 
         # Joint Limits
