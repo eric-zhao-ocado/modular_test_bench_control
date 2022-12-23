@@ -10,7 +10,6 @@ class MainWindow(QWidget):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setWindowTitle("Induct Testbench Control  (v1.0.0-alpha)")
         self.setGeometry(0, 0, 1500, 800)
-        
 
         ### TEST ###
         l1 = QTreeWidgetItem([ "String A",  "String B",  "String C" ])
@@ -490,6 +489,8 @@ class MainWindow(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)  # event loop
+    font = QFont('Tahoma')
+    app.setFont(font)
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
