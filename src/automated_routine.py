@@ -507,7 +507,11 @@ def gui_app(
         vel.value = vel_slider.get()
         acc.value = acc_slider.get()
     jog_arm_window.destroy()
-
+    
+def split_string(string):
+    main_list = string.split(' ')
+    main_list[1] = main_list[1].replace('(','').replace(')','').split(',')
+    return main_list
 
 def automated_routine():
     """
@@ -711,9 +715,9 @@ def automated_routine():
                 time.sleep(path[1])
             elif path[0] == "WAYPOINT":
                 for i in range(6):
-                    arm_mover[i] = path[1][i]
-                    vel.value = path[2]
-                    accel.value = path[3]
+                    arm_mover[i] = float(path[1][i])
+                vel.value = float(path[2])
+                accel.value = float(path[3])
                 move_arm_event.set()
                 while move_arm_event.is_set():
                     pass

@@ -33,6 +33,7 @@ class MainWindow(QWidget):
         self,
         jog_conveyor_event,
         conveyor_paths,
+        quit_event,
         next_stage_event,
         arm_mover,
         paths,
@@ -114,6 +115,7 @@ class MainWindow(QWidget):
 
         stop = QPushButton("KILL")
         stop.setStyleSheet(BACKWARD_BUTTON)
+
 
         def clear_routine():
             ROUTINE_MODULES.clear()
@@ -240,7 +242,7 @@ class MainWindow(QWidget):
 
 
         # Static Controls
-        static_controls = QGroupBox("Static Controls")
+        static_controls = QGroupBox("Static Controls (mm)")
         static_controls.setFont(title)
         static_controls.setEnabled(False)
 
@@ -339,6 +341,8 @@ class MainWindow(QWidget):
             x_static.setText(str(x_slider.value()))
             y_static.setText(str(y_slider.value()))
             z_static.setText(str(z_slider.value()))
+            acc.value = accel_dial.value()
+            vel.value = velocity_dial.value()
             conveyor_controls.setEnabled(False)
             top_row.setEnabled(True)
             static_controls.setEnabled(True)
@@ -390,7 +394,7 @@ class MainWindow(QWidget):
         extended_label.setFont(unbold)
         compressed_label = QLabel("Compressed:")
         compressed_label.setFont(unbold)
-        max_width_label = QLabel("Max:")
+        max_width_label = QLabel("Radius:")
         max_width_label.setFont(unbold)
 
         extended_entry = QLineEdit('')
@@ -633,7 +637,18 @@ class MainWindow(QWidget):
         bank_controls.addLayout(finite_runs)
         bank_controls.addWidget(stop)
 
-
+        def disable_all():
+            quit_event.set()
+            dynamic_controls.setEnabled(False)
+            static_controls.setEnabled(False)
+            conveyor_controls.setEnabled(False)
+            top_row.setEnabled(False)
+            calibration.setEnabled(False)
+            box.setEnabled(False)
+            configure_btn.setEnabled(False)
+            
+        stop.clicked.connect(lambda: quit_event.set())
+        stop.clicked.connect(disable_all)
 
         tr = QHBoxLayout()
         tr.addLayout(bank, stretch=3)
@@ -1009,6 +1024,7 @@ def rotate_45_deg(old_x, old_y):
 def gui_app(
     jog_conveyor_event,
     conveyor_paths,
+    quit_event,
     next_stage_event,
     arm_mover,
     paths,
@@ -1025,7 +1041,6 @@ def gui_app(
     length,
     gripr_len,
     gripr_rad,
-    quit_event,
 ):
     """
     Process for running the GUI.
@@ -1036,6 +1051,7 @@ def gui_app(
     window = MainWindow(
         jog_conveyor_event,
         conveyor_paths,
+        quit_event,
         next_stage_event,
         arm_mover,
         paths,
@@ -1111,6 +1127,7 @@ def automated_routine():
         args=(
             jog_conveyor_event,
             conveyor_paths,
+            quit_event,
             next_stage_event,
             arm_mover,
             paths,
@@ -1127,7 +1144,6 @@ def automated_routine():
             length,
             gripr_len,
             gripr_rad,
-            quit_event,
         )
     )
     gui_process.start()
@@ -1186,8 +1202,8 @@ def automated_routine():
     max_grip_conv_pos = max_conveyor_pos - gripr_rad.value + 61
     # Check to ensure box does not hit conveyor guards
     if long_diagonal > 184 and parcel == 0:
-        max_conveyor_pos = max_conveyor_pos - (long_diagonal - 183 / 2) / 2 \
-            - ((length - width) / (2 ** 0.5)) * 2.6
+        max_conveyor_pos = max_conveyor_pos - (long_diagonal - 183 / 2) / 2
+            # - ((length - width) / (2 ** 0.5)) * 2.6
     # Check to ensure gripper does not hit conveyor guards.
     max_conveyor_pos = min(max_grip_conv_pos, max_conveyor_pos)
     # Calculate PUU position
@@ -1249,8 +1265,6 @@ def automated_routine():
             arm_mover[1] = default_origin[1] + (distance + half_diagonal) / 2 ** 0.5
     next_stage_event.clear()
     
-    vel.value = 1
-    accel.value = 1
     while not next_stage_event.is_set():
         if quit_event.is_set():
             sys.exit(0)
@@ -1296,7 +1310,7 @@ def automated_routine():
                 protos_x.blowoff()
             elif path[0] == "DELAY":
                 time.sleep(path[1])
-            elif path[0] == "WAYPOINT":
+            else:
                 for i in range(6):
                     arm_mover[i] = path[1][i]
                     vel.value = path[2]
