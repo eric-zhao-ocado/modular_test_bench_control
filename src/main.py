@@ -1272,9 +1272,9 @@ def automated_routine():
     next_stage_event.wait()
 
     # NOTE: TESTING PURPOSES ONLY, need dynamic value
-    gripr_len.value = 335
-    compress_gripr_len.value = 265
-    gripr_rad.value = 74
+    # gripr_len.value = 335
+    # compress_gripr_len.value = 265
+    # gripr_rad.value = 74
 
     # Calculate the origin of the gripper
     # Makes sure the gripper doesn't hit the guards
@@ -1321,6 +1321,7 @@ def automated_routine():
     # Check to ensure box does not hit conveyor guards
     if long_diagonal > 184 and parcel == 0:
         max_conveyor_pos = max_conveyor_pos - (long_diagonal - 183 / 2) / 2
+        # The line belows ensures it doesn't hit the knockdown bar, but too aggressive.
             # - ((length - width) / (2 ** 0.5)) * 2.6
     # Check to ensure gripper does not hit conveyor guards.
     max_conveyor_pos = min(max_grip_conv_pos, max_conveyor_pos)
