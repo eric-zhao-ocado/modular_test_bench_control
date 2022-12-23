@@ -134,7 +134,8 @@ class MainWindow(QWidget):
                     accel_dial.setValue(int(split_text[3]))
                     joint_limits(split_coords[0], split_coords[1], split_coords[2])
             elif button_type == 'undo':
-                ROUTINE_MODULES.pop()
+                if len(ROUTINE_MODULES > 0):
+                    ROUTINE_MODULES.pop()
             sandbox_tree.clear()
             
             for data in ROUTINE_MODULES:
