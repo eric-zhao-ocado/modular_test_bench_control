@@ -38,6 +38,7 @@ class MainWindow(QWidget):
         self,
         jog_conveyor_event,
         conveyor_paths,
+        pick_pos_mon,
         quit_event,
         next_stage_event,
         arm_mover,
@@ -80,25 +81,25 @@ class MainWindow(QWidget):
         
         tw = QTreeWidget()
         tw.setColumnCount(4)
-        tw.setHeaderLabels(["Name", "Waypoint", "Acceleration", "Velocity"])
+        tw.setHeaderLabels(["Name", "Waypoint", "Velocity", "Acceleration"])
         tw.setStyleSheet(TREE)
         
         sandbox_tree = QTreeWidget()
         sandbox_tree.setColumnCount(1)
-        sandbox_tree.setHeaderLabel("Sandbox")
+        sandbox_tree.setHeaderLabel("Routine")
         sandbox_tree.setStyleSheet(TREE)
 
         tw_submit = QPushButton("Select")
         tw_submit.setStyleSheet(FORWARD_BUTTON)
 
         
-        drag = DragWidget(orientation=Qt.Orientation.Vertical)
+        # drag = DragWidget(orientation=Qt.Orientation.Vertical)
+        # drag = QTreeWidget()
+        # drag.setStyleSheet(TREE)
 
         ROUTINE_MODULES = []
         def refresh_sandbox(button_type):
             nonlocal ROUTINE_MODULES
-            for num in range(len(ROUTINE_MODULES)):
-                ROUTINE_MODULES.pop(len(ROUTINE_MODULES) - 1 - num)
             
             if button_type == 'submit':
                 format_list = []
@@ -106,25 +107,42 @@ class MainWindow(QWidget):
                     text = ix.data(Qt.DisplayRole) # or ix.data()
                     format_list.append(text)
                 if len(format_list) > 3:
+                    format_list[0] = format_list[0].replace(' ','_')
                     format_string = format_list[0] + r' ' + format_list[1] + r' ' +  format_list[2] + r' '  + format_list[3]
-                ROUTINE_MODULES.append(format_string)
-            elif button_type == 'kill':
-                ROUTINE_MODULES = []
+                    ROUTINE_MODULES.append(format_string)
+            # elif button_type == 'kill':
+            #     ROUTINE_MODULES = []
             elif button_type == 'blowoff':
                 ROUTINE_MODULES.append('Blowoff')
             elif button_type == 'pressure':
-                ROUTINE_MODULES.append('Vacuum 1')
+                if vacuum_value.text() != '':
+                    format_string = 'Vacuum' + r' ' + vacuum_value.text()
+                    ROUTINE_MODULES.append(format_string)
             elif button_type == 'delay':
-                ROUTINE_MODULES.append('Delay 5')
+                if delay_value.text() != '':
+                    format_string = 'Delay' + r' ' + delay_value.text()
+                    ROUTINE_MODULES.append(format_string)
+            elif button_type == 'check':
+                format_list = []
+                for ix in sandbox_tree.selectedIndexes():
+                    text = ix.data(Qt.DisplayRole)
+                    format_list.append(text)
+                if len(format_list) > 0:
+                    split_text = format_list[0].split(' ')
+                    split_coords = split_text[1].replace("(",'').replace(")",'').split(',')
+                    velocity_dial.setValue(int(split_text[2]))
+                    accel_dial.setValue(int(split_text[3]))
+                    joint_limits(split_coords[0], split_coords[1], split_coords[2])
+            elif button_type == 'undo':
+                ROUTINE_MODULES.pop()
+            sandbox_tree.clear()
             
-            
-            for n, l in enumerate(ROUTINE_MODULES):
-                item = DragItem(l)
-                item.set_data(n)  # Store the data.
-                drag.add_item(item)
+            for data in ROUTINE_MODULES:
+                item = QTreeWidgetItem([data])
+                sandbox_tree.addTopLevelItem(item)
+                
             
             # return ROUTINE_MODULES
-            
         
         tw_submit.clicked.connect(lambda: refresh_sandbox('submit'))
 
@@ -147,20 +165,18 @@ class MainWindow(QWidget):
         run_value.setStyleSheet(LINE_EDIT)
         
         def run_routine(cycles, paths):
-            print(ROUTINE_MODULES)
             for entry in ROUTINE_MODULES:
                 paths.append(split_string(entry))
             if run_value.text() != '':
                 cycles.value = int(run_value.text())
-            print(paths[:])
             next_stage_event.set()
         
         run.clicked.connect(lambda: run_routine(cycles=cycles, paths=paths))
 
-        stop = QPushButton("KILL")
-        stop.setStyleSheet(BACKWARD_BUTTON)
+        # stop = QPushButton("KILL")
+        # stop.setStyleSheet(BACKWARD_BUTTON)
 
-        stop.clicked.connect(lambda: refresh_sandbox('kill'))
+        # stop.clicked.connect(lambda: refresh_sandbox('kill'))
         
         # design 
         title=QFont()
@@ -194,7 +210,7 @@ class MainWindow(QWidget):
         accel_dial.setValue(70)
         accel_dial.setNotchesVisible(False)
     
-        accel_label = QLabel("acceleration")
+        accel_label = QLabel("Acceleration")
         accel_label.setFont(unbold)
         accel_value = QLabel("{}%".format(accel_dial.value()))
         accel_dial.valueChanged.connect(lambda value: accel_value.setText("{}%".format(accel_dial.value())))
@@ -210,7 +226,7 @@ class MainWindow(QWidget):
         velocity_dial.setNotchesVisible(False)
     
     
-        velocity_label = QLabel("velocity")
+        velocity_label = QLabel("Velocity")
         velocity_label.setFont(unbold)
         velocity_value = QLabel("{}%".format(velocity_dial.value()))
         velocity_dial.valueChanged.connect(lambda value: velocity_value.setText("{}%".format(velocity_dial.value())))
@@ -261,7 +277,7 @@ class MainWindow(QWidget):
             if velocity == '0':
                 velocity = '50'
 
-            row = QTreeWidgetItem([name, wp, accel, velocity])
+            row = QTreeWidgetItem([name, wp, velocity, accel,])
             tw.addTopLevelItem(row)
             
         submit_start.clicked.connect(bank_update)
@@ -330,18 +346,19 @@ class MainWindow(QWidget):
         sc_z_val.setFont(title)
         sc_z_val.setStyleSheet('color: deeppink')
 
-        def joint_limits():
-            x_slider.setValue(int(x_static.text()))
-            y_slider.setValue(int(y_static.text()))
-            z_slider.setValue(int(z_static.text()))
-            sc_x_val.setText("{}".format(x_slider.value()))
-            sc_y_val.setText("{}".format(y_slider.value()))
-            sc_z_val.setText("{}".format(z_slider.value()))
-            x_static.setText(str(x_slider.value()))
-            y_static.setText(str(y_slider.value()))
-            z_static.setText(str(z_slider.value()))
+        def joint_limits(x_text, y_text, z_text):
+            if x_text != '' and y_text != '' and z_text != '':
+                x_slider.setValue(int(x_text))
+                y_slider.setValue(int(y_text))
+                z_slider.setValue(int(z_text))
+                sc_x_val.setText("{}".format(x_slider.value()))
+                sc_y_val.setText("{}".format(y_slider.value()))
+                sc_z_val.setText("{}".format(z_slider.value()))
+                x_static.setText(str(x_slider.value()))
+                y_static.setText(str(y_slider.value()))
+                z_static.setText(str(z_slider.value()))
 
-        check_joint_limits.clicked.connect(joint_limits)
+        check_joint_limits.clicked.connect(lambda: joint_limits(x_static.text(), y_static.text(), z_static.text()))
 
         # Conveyor Controls
         conveyor_controls = QGroupBox("Conveyor Controls")
@@ -381,6 +398,11 @@ class MainWindow(QWidget):
             x_static.setText(str(x_slider.value()))
             y_static.setText(str(y_slider.value()))
             z_static.setText(str(z_slider.value()))
+            save_end_point(
+                conveyor_paths["forwards_distance"],
+                pick_pos_mon.check_value(),
+                next_stage_event
+            )
             acc.value = accel_dial.value()
             vel.value = velocity_dial.value()
             conveyor_controls.setEnabled(False)
@@ -393,8 +415,12 @@ class MainWindow(QWidget):
         configure_btn = QPushButton('Configure')
         configure_btn.setStyleSheet(BASIC_BUTTON)
 
-        def init_complete():
+        def init_complete(width, length):
             calibration.setEnabled(False)
+            if width.value > length.value:
+                temp = width.value
+                width.value = length.value
+                length.value = temp
             # NOTE COMMENTED OUT FOR OFFLINE
             next_stage_event.set()
             next_stage_event.clear()
@@ -402,7 +428,7 @@ class MainWindow(QWidget):
             # ^^ COMMENT OUT FOR OFFLINE
             conveyor_controls.setEnabled(True)
 
-        configure_btn.clicked.connect(init_complete)
+        configure_btn.clicked.connect(lambda: init_complete(width, length))
         
         dimensions_label = QLabel("Item Dimensions (mm)")
         dimensions_label.setFont(unbold)
@@ -491,12 +517,12 @@ class MainWindow(QWidget):
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scroll.setWidgetResizable(True)
-        scroll.setWidget(drag)
+        scroll.setWidget(sandbox_tree)
         
         
 
-        # Joint Limits
-        joint_limits = QGroupBox("Joint Limits")
+        # # Joint Limits
+        # joint_limits = QGroupBox("Joint Limits")
 
         # Logo
         placeholder = QSlider(minimum=45, maximum=80, orientation=Qt.Horizontal)
@@ -508,14 +534,15 @@ class MainWindow(QWidget):
         top_row.setEnabled(False)
         
         dials = QHBoxLayout()
-        dials.addWidget(accel_dial)
-        dials.addItem(micro_horizontalSpacer)
-        dials.addWidget(accel_label)
-        dials.addWidget(accel_value)
         dials.addWidget(velocity_dial)
         dials.addItem(micro_horizontalSpacer)
         dials.addWidget(velocity_label)
         dials.addWidget(velocity_value)
+        dials.addWidget(accel_dial)
+        dials.addItem(micro_horizontalSpacer)
+        dials.addWidget(accel_label)
+        dials.addWidget(accel_value)
+        
         
 
         slider_value_x = QHBoxLayout()
@@ -677,13 +704,49 @@ class MainWindow(QWidget):
         finite_runs = QHBoxLayout()
         finite_runs.addWidget(run, stretch=2)
         finite_runs.addWidget(run_value, stretch=0)
+        
+        vacuum_value = QLineEdit()
+        vacuum_value.setStyleSheet(LINE_EDIT)
 
+        vacuum_controls = QHBoxLayout()
+        vacuum_controls.addWidget(activate_vacuum, stretch=2)
+        vacuum_controls.addWidget(vacuum_value, stretch=0)
+        
+        delay_value = QLineEdit()
+        delay_value.setStyleSheet(LINE_EDIT)
+        
+        delay_controls = QHBoxLayout()
+        delay_controls.addWidget(delay, stretch=2)
+        delay_controls.addWidget(delay_value, stretch=0)
+        
+        check = QPushButton("Check")
+        check.setStyleSheet(BASIC_BUTTON)
+        check.clicked.connect(lambda: refresh_sandbox('check'))
+        
+        undo = QPushButton("Undo")
+        undo.setStyleSheet(BASIC_BUTTON)
+        undo.clicked.connect(lambda: refresh_sandbox('undo'))
+        
         bank_controls = QVBoxLayout()
-        bank_controls.addWidget(activate_vacuum)
+        bank_controls.addWidget(check)
+        bank_controls.addWidget(undo)
+        bank_controls.addLayout(vacuum_controls)
         bank_controls.addWidget(deactivate_vacuum)
-        bank_controls.addWidget(delay)
+        bank_controls.addLayout(delay_controls)
         bank_controls.addLayout(finite_runs)
-        bank_controls.addWidget(stop)
+        # bank_controls.addWidget(stop)
+        
+        def running_routine():
+            dynamic_controls.setEnabled(False)
+            static_controls.setEnabled(False)
+            conveyor_controls.setEnabled(False)
+            calibration.setEnabled(False)
+            box.setEnabled(False)
+            configure_btn.setEnabled(False)
+            # stop.setEnabled(True)
+            
+        
+        run.clicked.connect(lambda: running_routine())
 
         def disable_all():
             quit_event.set()
@@ -695,8 +758,8 @@ class MainWindow(QWidget):
             box.setEnabled(False)
             configure_btn.setEnabled(False)
             
-        stop.clicked.connect(lambda: quit_event.set())
-        stop.clicked.connect(disable_all)
+        # stop.clicked.connect(lambda: quit_event.set())
+        # stop.clicked.connect(disable_all)
 
         tr = QHBoxLayout()
         tr.addLayout(bank, stretch=3)
@@ -1072,6 +1135,7 @@ def rotate_45_deg(old_x, old_y):
 def gui_app(
     jog_conveyor_event,
     conveyor_paths,
+    pick_pos_mon,
     quit_event,
     next_stage_event,
     arm_mover,
@@ -1100,6 +1164,7 @@ def gui_app(
     window = MainWindow(
         jog_conveyor_event,
         conveyor_paths,
+        pick_pos_mon,
         quit_event,
         next_stage_event,
         arm_mover,
@@ -1178,6 +1243,7 @@ def automated_routine():
         args=(
             jog_conveyor_event,
             conveyor_paths,
+            pick_pos_mon,
             quit_event,
             next_stage_event,
             arm_mover,
@@ -1274,6 +1340,7 @@ def automated_routine():
     accel.value = 100
     
     min_conveyor_pos = round(sv2_cnst.E_GEAR_DEN * (2 ** 0.5 * (arm_origin_x - default_origin[0])-half_diagonal) / pick_conveyor.turn_circum) + 1000
+    min_conveyor_pos = max(0, min_conveyor_pos)
     pick_conveyor.add_point_point_path(
         "min_location",
         sv2_cnst.CMD_ABS, min_conveyor_pos + 100, 50, 4000)
@@ -1292,10 +1359,12 @@ def automated_routine():
 
         # Check if conveyor has been jogged too far backwards, and reset if so.
         if reset_parcel_event.is_set():
+            jog_conveyor_event.clear()
             reset_parcel(conveyor_paths, protos_x, pick_speed_mon)
             time.sleep(0.2)
             pick_conveyor.set_home()
             reset_parcel_event.clear()
+            jog_conveyor_event.set()
         elif position >= 4000000000 or position < min_conveyor_pos:
             jog_conveyor_event.clear()
             conveyor_paths["min_location"].trigger_path()
@@ -1328,13 +1397,30 @@ def automated_routine():
 
     # reset data file
     with open('data.csv', "w+", encoding='UTF8', newline='') as file:
-        headings = ['Cycle number', 'Time (s)', 'Type', 'Value', 'Velocity (%)', 'Acceleration (%)']
+        headings = ['Cycle number', 'Time (s)', 'Name', 'Value', 'Velocity (%)', 'Acceleration (%)', 'Real XYZ Coordinates']
         # create the csv writer
         writer = csv.writer(file)
         writer.writerow(headings)
+        
     start_time = time.perf_counter()
     cycle_num = 1
+    
+    for num, path in enumerate(paths[:]):
+        if path[0] == "Vacuum":
+            pass
+        elif path[0] == "Blowoff":
+            pass
+        elif path[0] == "Delay":
+            pass
+        else:
+            temp = paths[num]
+            new_x, new_y = rotate_45_deg(float(path[1][0]), float(path[1][1]))
+            new_coords = [new_x, new_y, float(path[1][2])]
+            temp.append(new_coords)
+            paths[num] = temp
+    
     while cycle_num <= cycles.value:
+        print(f'On routine number: {cycle_num}')
         if quit_event.is_set():
             sys.exit(0)
         # Wait for package to be detected.
@@ -1356,16 +1442,16 @@ def automated_routine():
                 # write a row to the csv file
                 writer.writerow(info)
             if path[0] == "Vacuum":
-                protos_x.vacuum(path[1])
+                protos_x.vacuum(int(path[1]))
             elif path[0] == "Blowoff":
                 protos_x.blowoff()
             elif path[0] == "Delay":
-                time.sleep(path[1])
+                time.sleep(float(path[1]))
             else:
-                for i in range(6):
-                    arm_mover[i] = path[1][i]
-                    vel.value = path[2]
-                    accel.value = path[3]
+                vel.value = float(path[2])
+                accel.value = float(path[3])
+                for i in range(3):
+                    arm_mover[i] = path[4][i]
                 move_arm_event.set()
                 while move_arm_event.is_set():
                     pass

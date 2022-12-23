@@ -632,6 +632,7 @@ def automated_routine():
             2 ** 0.5 * (arm_origin_x - default_origin[0])-half_diagonal
         ) / pick_conveyor.turn_circum
     ) + 1000
+    min_conveyor_pos = max(min_conveyor_pos, 0)
     pick_conveyor.add_point_point_path(
         "min_location",
         sv2_cnst.CMD_ABS, min_conveyor_pos + 100, 50, 4000)
