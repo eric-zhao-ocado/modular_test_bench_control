@@ -156,6 +156,10 @@ class MainWindow(QWidget):
         tw.setColumnCount(4)
         tw.setHeaderLabels(["Name", "Waypoint", "Acceleration", "Velocity"])
         tw.setStyleSheet(TREE)
+        
+        ### TEST ###
+        l1 = QTreeWidgetItem([ "String A",  "String B",  "String C" ])
+        l2 = QTreeWidgetItem([ "String AA", "String BB", "String CC" ])
 
         sandbox_tree = QTreeWidget()
         sandbox_tree.setColumnCount(1)
@@ -163,6 +167,20 @@ class MainWindow(QWidget):
 
         
 
+        tw = QTreeWidget()
+        tw.resize(500,200)
+        tw.setColumnCount(3)
+        tw.setHeaderLabels(["Column 1", "Column 2", "Column 3"])
+        tw.addTopLevelItem(l1)
+        tw.addTopLevelItem(l2)
+        tw.setStyleSheet(TREE)
+        ### TEST ###
+
+        ### super test ###
+    
+        ### super test ###
+        # sliders
+        
         # design 
         title=QFont()
         title.setBold(True)
@@ -171,12 +189,12 @@ class MainWindow(QWidget):
         unbold=QFont()
         unbold.setBold(False)
         #title.setPixelSize()
-
+        
         # allow only integers
         onlyInt = QIntValidator()
         onlyInt.setRange(0, 180)
         onlyInt.setBottom(0)
-
+        
         # Waypoint Bank
         tw_label = QLabel("Waypoints Bank")
         tw_label.setFont(unbold)
@@ -397,8 +415,88 @@ class MainWindow(QWidget):
             dynamic_controls.setEnabled(True)
             next_stage_event.set()
         set_btn.clicked.connect(lambda: set_conveyor())
+        
+        configure_btn = QPushButton('Configure')
+        configure_btn.setStyleSheet(BASIC_BUTTON)
 
-        calibration.setEnabled(False)
+        def init_complete():
+            calibration.setEnabled(False)
+            next_stage_event.set()
+            next_stage_event.clear()
+            print("waiting")
+            next_stage_event.wait()
+            conveyor_controls.setEnabled(True)
+
+        configure_btn.clicked.connect(init_complete)
+        
+        dimensions_label = QLabel("Item Dimensions (mm)")
+        dimensions_label.setFont(unbold)
+
+        width_label = QLabel("w: ")
+        width_label.setFont(unbold)
+        length_label = QLabel("l:")
+        length_label.setFont(unbold)
+        height_label = QLabel("h:")
+        height_label.setFont(unbold)
+
+        width_entry = QLineEdit('')
+        width_entry.setStyleSheet(LINE_EDIT)
+        width_entry.setAlignment(Qt.AlignCenter)
+        width_entry.setValidator(onlyInt)
+        length_entry = QLineEdit('')
+        length_entry.setStyleSheet(LINE_EDIT)
+        length_entry.setAlignment(Qt.AlignCenter)
+        length_entry.setValidator(onlyInt)
+        height_entry = QLineEdit('')
+        height_entry.setStyleSheet(LINE_EDIT)
+        height_entry.setAlignment(Qt.AlignCenter)
+        height_entry.setValidator(onlyInt)
+
+        griper_label = QLabel("Gripper Limits (mm) :")
+        item_label = QLabel("Item dimensions (mm) :")
+        extended_label = QLabel("Extended Length: ")
+        extended_label.setFont(unbold)
+        compressed_label = QLabel("Compressed Length")
+        compressed_label.setFont(unbold)
+        max_width_label = QLabel("Max Width:")
+        max_width_label.setFont(unbold)
+
+        extended_entry = QLineEdit('')
+        extended_entry.setStyleSheet(LINE_EDIT)
+        extended_entry.setAlignment(Qt.AlignCenter)
+        extended_entry.setValidator(onlyInt)
+        compressed_entry = QLineEdit('')
+        compressed_entry.setStyleSheet(LINE_EDIT)
+        compressed_entry.setAlignment(Qt.AlignCenter)
+        compressed_entry.setValidator(onlyInt)
+        max_width_entry = QLineEdit('')
+        max_width_entry.setStyleSheet(LINE_EDIT)
+        max_width_entry.setAlignment(Qt.AlignCenter)
+        max_width_entry.setValidator(onlyInt)
+
+        list_of_edits = [width_entry, length_entry, height_entry, extended_entry, compressed_entry, max_width_entry]
+        
+        def edit_text_changed(self):
+            for input in list_of_edits:
+                if input.text() == '':
+                    configure_btn.setEnabled(False)
+                    return
+                else:
+                    configure_btn.setEnabled(True)
+
+        configure_btn.setEnabled(False)
+        for input in list_of_edits:
+            input.textChanged.connect(edit_text_changed)
+        def update_int(num, new_value):
+            if new_value != '':
+                num.value = int(new_value)
+        width_entry.textChanged.connect(lambda: update_int(width, width_entry.text()))
+        length_entry.textChanged.connect(lambda: update_int(length, length_entry.text()))
+        height_entry.textChanged.connect(lambda: update_int(height, height_entry.text()))
+        extended_entry.textChanged.connect(lambda: update_int(gripr_len, extended_entry.text()))
+        compressed_entry.textChanged.connect(lambda: update_int(compress_gripr_len, compressed_entry.text()))
+        max_width_entry.textChanged.connect(lambda: update_int(gripr_rad, max_width_entry.text()))
+
 
         configure_btn.clicked.connect(init_complete)
 
