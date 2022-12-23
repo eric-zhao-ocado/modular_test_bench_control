@@ -97,13 +97,15 @@ class MainWindow(QWidget):
         ROUTINE_MODULES = []
         def refresh_sandbox(button_type):
             nonlocal ROUTINE_MODULES
+            for num in range(len(ROUTINE_MODULES)):
+                ROUTINE_MODULES.pop(len(ROUTINE_MODULES) - 1 - num)
             
             if button_type == 'submit':
                 format_list = []
                 for ix in tw.selectedIndexes():
                     text = ix.data(Qt.DisplayRole) # or ix.data()
                     format_list.append(text)
-                if len(format_string) > 3:
+                if len(format_list) > 3:
                     format_string = format_list[0] + r' ' + format_list[1] + r' ' +  format_list[2] + r' '  + format_list[3]
                 ROUTINE_MODULES.append(format_string)
             elif button_type == 'kill':
@@ -121,7 +123,7 @@ class MainWindow(QWidget):
                 item.set_data(n)  # Store the data.
                 drag.add_item(item)
             
-            return ROUTINE_MODULES
+            # return ROUTINE_MODULES
             
         
         tw_submit.clicked.connect(lambda: refresh_sandbox('submit'))
@@ -145,14 +147,15 @@ class MainWindow(QWidget):
         run_value.setStyleSheet(LINE_EDIT)
         
         def run_routine(cycles, paths):
-            # for entry in :
-            #     paths.append(split_string(entry))
-            paths.append("Blowoff")
+            print(ROUTINE_MODULES)
+            for entry in ROUTINE_MODULES:
+                paths.append(split_string(entry))
             if run_value.text() != '':
                 cycles.value = int(run_value.text())
+            print(paths[:])
             next_stage_event.set()
         
-        run.clicked.connect(run_routine(cycles=cycles, paths=paths))
+        run.clicked.connect(lambda: run_routine(cycles=cycles, paths=paths))
 
         stop = QPushButton("KILL")
         stop.setStyleSheet(BACKWARD_BUTTON)
@@ -1352,11 +1355,11 @@ def automated_routine():
                 writer = csv.writer(file)
                 # write a row to the csv file
                 writer.writerow(info)
-            if path[0] == "VACUUM":
+            if path[0] == "Vacuum":
                 protos_x.vacuum(path[1])
-            elif path[0] == "BLOWOFF":
+            elif path[0] == "Blowoff":
                 protos_x.blowoff()
-            elif path[0] == "DELAY":
+            elif path[0] == "Delay":
                 time.sleep(path[1])
             else:
                 for i in range(6):
