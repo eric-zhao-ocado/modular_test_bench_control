@@ -29,13 +29,13 @@ import test_bench_constants as tb_cnst
 class MainWindow(QWidget):
     def __init__(
         self,
-        # conveyor_paths,
+        jog_conveyor_event,
+        conveyor_paths,
         next_stage_event,
         arm_mover,
         paths,
         height,
         coord_sliders,
-        jog_conveyor_event,
         compress_gripr_len,
         vel,
         acc,
@@ -296,13 +296,13 @@ class MainWindow(QWidget):
 
         forward_btn = QPushButton('Forward')
         forward_btn.setStyleSheet(FORWARD_BUTTON)
-        # forward_btn.pressed.connect(lambda: jog_servo("Forward", conveyor_paths["jog_path"], 50, jog_conveyor_event))
-        # forward_btn.released.connect(lambda: conveyor_paths["fast_stop"].trigger_path())
+        forward_btn.pressed.connect(lambda: jog_servo("Forward", conveyor_paths["jog_path"], 50, jog_conveyor_event))
+        forward_btn.released.connect(lambda: conveyor_paths["fast_stop"].trigger_path())
         
         backward_btn = QPushButton('Backward')
         backward_btn.setStyleSheet(BACKWARD_BUTTON)
-        # backward_btn.pressed.connect(lambda: jog_servo("Backward", conveyor_paths["jog_path"], 50, jog_conveyor_event))
-        # backward_btn.released.connect(lambda: conveyor_paths["fast_stop"].trigger_path())
+        backward_btn.pressed.connect(lambda: jog_servo("Backward", conveyor_paths["jog_path"], 50, jog_conveyor_event))
+        backward_btn.released.connect(lambda: conveyor_paths["fast_stop"].trigger_path())
 
         reset_btn = QPushButton('Reset')
         reset_btn.setStyleSheet(BASIC_BUTTON)
@@ -336,9 +336,10 @@ class MainWindow(QWidget):
         def init_complete():
             calibration.setEnabled(False)
             # NOTE COMMENTED OUT FOR OFFLINE
-            # next_stage_event.set()
-            # next_stage_event.clear()
-            # next_stage_event.wait()
+            next_stage_event.set()
+            next_stage_event.clear()
+            next_stage_event.wait()
+            # ^^ COMMENT OUT FOR OFFLINE
             conveyor_controls.setEnabled(True)
 
         configure_btn.clicked.connect(init_complete)
@@ -763,7 +764,10 @@ def move_arm(
 
     while not quit_event.is_set():
         # Wait for event telling arm to move to be set.
-        move_arm_event.wait()
+        while not move_arm_event.is_set():
+            if quit_event.is_set():
+                robot.disconnect()
+                sys.exit(0)
         # Check if the movement command is within the bounds of the testbench.
         if (
             tb_cnst.MIN_X < pos[0] < tb_cnst.MAX_X
@@ -783,10 +787,9 @@ def move_arm(
                 print(repr(exception))
         # Clear the move arm event.
         move_arm_event.clear()
-    print("arm")
     quit_event.set()
     robot.disconnect()
-    quit()
+    sys.exit(0)
 
 def pick_conveyor_init():
     """
@@ -988,13 +991,13 @@ def rotate_45_deg(old_x, old_y):
     return new_x, new_y
 
 def gui_app(
-    # conveyor_paths,
+    jog_conveyor_event,
+    conveyor_paths,
     next_stage_event,
     arm_mover,
     paths,
     height,
     coord_sliders,
-    jog_conveyor_event,
     compress_gripr_len,
     vel,
     accel,
@@ -1015,13 +1018,13 @@ def gui_app(
     font = QFont('Tahoma')
     app.setFont(font)
     window = MainWindow(
-        # conveyor_paths,
+        jog_conveyor_event,
+        conveyor_paths,
         next_stage_event,
         arm_mover,
         paths,
         height,
         coord_sliders,
-        jog_conveyor_event,
         compress_gripr_len,
         vel,
         accel,
@@ -1046,11 +1049,10 @@ def automated_routine():
     Routine for automating the testing of grippers on parcels.
     """
     # Initial initialization
-    
-    # protos_x = px_ctrl.ProtosX(tb_cnst.PROTOS_X_HOST)
-    # pick_conveyor, pick_speed_mon, pick_pos_mon = pick_conveyor_init()
-    # conveyor_paths = pick_conveyor.path_dict
-    # feed_conveyor = feed_conveyor_init()
+    protos_x = px_ctrl.ProtosX(tb_cnst.PROTOS_X_HOST)
+    pick_conveyor, pick_speed_mon, pick_pos_mon = pick_conveyor_init()
+    conveyor_paths = pick_conveyor.path_dict
+    feed_conveyor = feed_conveyor_init()
 
 
     # Initialize events.
@@ -1078,26 +1080,26 @@ def automated_routine():
     paths = manager.list()
     coord_sliders = mp.Array('d', range(3))
 
-    # atexit.register(
-    #     exit_routine,
-    #     protos_x=protos_x,
-    #     servo=pick_conveyor.servo,
-    #     vfd=feed_conveyor,
-    #     paths=conveyor_paths,
-    #     pick_speed_mon=pick_speed_mon,
-    #     quit_event=quit_event,
-    # )
+    atexit.register(
+        exit_routine,
+        protos_x=protos_x,
+        servo=pick_conveyor.servo,
+        vfd=feed_conveyor,
+        paths=conveyor_paths,
+        pick_speed_mon=pick_speed_mon,
+        quit_event=quit_event,
+    )
     
     gui_process = mp.Process(
         target=gui_app,
         args=(
-            # conveyor_paths,
+            jog_conveyor_event,
+            conveyor_paths,
             next_stage_event,
             arm_mover,
             paths,
             height,
             coord_sliders,
-            jog_conveyor_event,
             compress_gripr_len,
             vel,
             accel,
@@ -1113,10 +1115,10 @@ def automated_routine():
         )
     )
     gui_process.start()
-    # NOTE FOR OFFLINE TESTING ONLY \/\/\/\/
-    quit_event.wait()
-    sys.exit(0)
-    # OFFLINE ONLY ^^
+    # # NOTE FOR OFFLINE TESTING ONLY \/\/\/\/
+    # quit_event.wait()
+    # sys.exit(0)
+    # # OFFLINE ONLY ^^
     next_stage_event.wait()
 
     # NOTE: TESTING PURPOSES ONLY, need dynamic value
@@ -1220,8 +1222,6 @@ def automated_routine():
         # Check if conveyor position is too far forwards, reset position if so.
         elif 4000000000 >= position >= max_conveyor_pos:
             jog_conveyor_event.clear()
-            # conveyor_paths["fast_stop"].trigger_path()
-            # position = max_conveyor_pos
             conveyor_paths["reset_path"].trigger_path()
             while pick_speed_mon.check_value() != 0:
                 pass
@@ -1300,11 +1300,3 @@ def automated_routine():
 
 if __name__ == '__main__':
     automated_routine()
-
-# if __name__ == "__main__":
-#     app = QApplication(sys.argv)  # event loop
-#     font = QFont('Tahoma')
-#     app.setFont(font)
-#     window = MainWindow()
-#     window.show()
-#     sys.exit(app.exec_())

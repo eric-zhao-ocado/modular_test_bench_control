@@ -18,8 +18,6 @@ import sure_servo_2_constants as sv2_cnst
 import yaskawa_vfd_control as vfd_ctrl
 import test_bench_constants as tb_cnst
 
-import main
-
 
 def exit_routine(
     protos_x: px_ctrl.ProtosX,
@@ -286,11 +284,11 @@ def add_blowoff(paths):
         paths: Array containing waypoints
     """
     paths.append(["BLOWOFF"])
-    
+
 def add_delay(paths, dly_time):
     """
     Adds a delay point to the array.
-    
+
     Args:
         paths: Array containing waypoints
         dly_time: Delay time in seconds
@@ -593,8 +591,9 @@ def automated_routine():
     max_grip_conv_pos = max_conveyor_pos - gripr_rad + 61
     # Check to ensure box does not hit conveyor guards
     if long_diagonal > 184 and parcel == 'x':
-        max_conveyor_pos = max_conveyor_pos - (long_diagonal - 183 / 2) / 2 \
-            - ((length - width) / (2 ** 0.5)) * 2.6
+        max_conveyor_pos = max_conveyor_pos - (long_diagonal - 183 / 2) / 2
+            # - ((length - width) / (2 ** 0.5))
+    # *2.6
     # Check to ensure gripper does not hit conveyor guards.
     max_conveyor_pos = min(max_grip_conv_pos, max_conveyor_pos)
     # Calculate PUU position
@@ -612,19 +611,23 @@ def automated_routine():
     manager = mp.Manager()
     paths = manager.list()
     coord_sliders = mp.Array('d', range(3))
-    # gui_process = mp.Process(
-    #     target=gui_app,
-    #     args=(
-    #         conveyor_paths, pick_pos_mon, next_stage_event, arm_mover,
-    #         paths, height, coord_sliders, jog_conveyor_event, compress_gripr_len,
-    #         vel, accel, min_arm_x, max_arm_x
-    #     )
-    # )
-    # gui_process.start()
-    
+    gui_process = mp.Process(
+        target=gui_app,
+        args=(
+            conveyor_paths, pick_pos_mon, next_stage_event, arm_mover,
+            paths, height, coord_sliders, jog_conveyor_event, compress_gripr_len,
+            vel, accel, min_arm_x, max_arm_x
+        )
+    )
+    gui_process.start()
+
     vel.value = 100
     accel.value = 100
-    min_conveyor_pos = round(sv2_cnst.E_GEAR_DEN * (2 ** 0.5 * (arm_origin_x - default_origin[0])-half_diagonal) / pick_conveyor.turn_circum) + 1000
+    min_conveyor_pos = round(
+        sv2_cnst.E_GEAR_DEN * (
+            2 ** 0.5 * (arm_origin_x - default_origin[0])-half_diagonal
+        ) / pick_conveyor.turn_circum
+    ) + 1000
     pick_conveyor.add_point_point_path(
         "min_location",
         sv2_cnst.CMD_ABS, min_conveyor_pos + 100, 50, 4000)
