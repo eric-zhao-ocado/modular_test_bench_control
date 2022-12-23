@@ -27,7 +27,11 @@ import sure_servo_2_control as sv2_ctrl
 import sure_servo_2_constants as sv2_cnst
 import yaskawa_vfd_control as vfd_ctrl
 import test_bench_constants as tb_cnst
-
+def split_string(string):
+    main_list = string.split(' ')
+    if len(main_list) > 2:
+        main_list[1] = main_list[1].replace('(','').replace(')','').split(',')
+    return main_list
 
 class MainWindow(QWidget):
     def __init__(
@@ -51,6 +55,7 @@ class MainWindow(QWidget):
         length,
         gripr_len,
         gripr_rad,
+        cycles,
         *args,
         **kwargs
     ):
@@ -97,7 +102,8 @@ class MainWindow(QWidget):
                 for ix in tw.selectedIndexes():
                     text = ix.data(Qt.DisplayRole) # or ix.data()
                     format_list.append(text)
-                format_string = format_list[0] + r' ' + format_list[1] + r' ' +  format_list[2] + r' '  + format_list[3]
+                if len(format_string) > 3:
+                    format_string = format_list[0] + r' ' + format_list[1] + r' ' +  format_list[2] + r' '  + format_list[3]
                 ROUTINE_MODULES.append(format_string)
             elif button_type == 'kill':
                 ROUTINE_MODULES = []
@@ -132,6 +138,16 @@ class MainWindow(QWidget):
         run.setStyleSheet(FORWARD_BUTTON)
         run_value = QLineEdit()
         run_value.setStyleSheet(LINE_EDIT)
+        
+        def run_routine(cycles, paths):
+            # for entry in :
+            #     paths.append(split_string(entry))
+            paths.append("Blowoff")
+            if run_value.text() != '':
+                cycles.value = int(run_value.text())
+            next_stage_event.set()
+        
+        run.clicked.connect(run_routine(cycles=cycles, paths=paths))
 
         stop = QPushButton("KILL")
         stop.setStyleSheet(BACKWARD_BUTTON)
@@ -1065,6 +1081,7 @@ def gui_app(
     length,
     gripr_len,
     gripr_rad,
+    cycles,
 ):
     """
     Process for running the GUI.
@@ -1092,6 +1109,7 @@ def gui_app(
         length,
         gripr_len,
         gripr_rad,
+        cycles
     )
     window.show()
     code=app.exec_()
@@ -1135,6 +1153,7 @@ def automated_routine():
     manager = mp.Manager()
     paths = manager.list()
     coord_sliders = mp.Array('d', range(3))
+    cycles = mp.Value('i', 0)
 
     atexit.register(
         exit_routine,
@@ -1168,6 +1187,7 @@ def automated_routine():
             length,
             gripr_len,
             gripr_rad,
+            cycles,
         )
     )
     gui_process.start()
@@ -1296,7 +1316,6 @@ def automated_routine():
         arm_mover[2] = coord_sliders[2]
         move_arm_event.set()
 
-    cycles = int(input('Number of cycles: '))
     feed_conveyor.start_motor_forwards()
 
     # reset data file
@@ -1307,7 +1326,7 @@ def automated_routine():
         writer.writerow(headings)
     start_time = time.perf_counter()
     cycle_num = 1
-    while cycle_num <= cycles:
+    while cycle_num <= cycles.value:
         if quit_event.is_set():
             sys.exit(0)
         # Wait for package to be detected.
