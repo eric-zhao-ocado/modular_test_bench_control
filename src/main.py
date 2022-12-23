@@ -91,10 +91,14 @@ class MainWindow(QWidget):
 
         def refresh_sandbox(button_type):
             ROUTINE_MODULES = []
+            
             if button_type == 'submit':
+                format_list = []
                 for ix in tw.selectedIndexes():
                     text = ix.data(Qt.DisplayRole) # or ix.data()
-                    ROUTINE_MODULES.append(str(text))
+                    format_list.append(text)
+                format_string = format_list[0] + r' ' + format_list[1] + r' ' +  format_list[2] + r' '  + format_list[3]
+                ROUTINE_MODULES.append(format_string)
             elif button_type == 'kill':
                 ROUTINE_MODULES = []
             elif button_type == 'blowoff':
