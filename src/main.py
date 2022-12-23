@@ -5,7 +5,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from resources.styles import *
-from resources.import_functions import *
+
 
 """
 Automated gripper testing routine.
@@ -90,11 +90,11 @@ class MainWindow(QWidget):
                 text = ix.data(Qt.DisplayRole) # or ix.data()
                 ROUTINE_MODULES.append(str(text))
 
-            for n, l in enumerate(ROUTINE_MODULES):
-                item = DragItem(l)
-                item.set_data(n)  # Store the data.
-                row = QTreeWidgetItem(item)
-                sandbox_tree.addTopLevelItem(row)
+            # for n, l in enumerate(ROUTINE_MODULES):
+            #     item = DragItem(l)
+            #     item.set_data(n)  # Store the data.
+            #     row = QTreeWidgetItem(item)
+            #     sandbox_tree.addTopLevelItem(row)
 
         tw_submit.clicked.connect(add_routine)
 
