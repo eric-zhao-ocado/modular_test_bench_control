@@ -114,8 +114,9 @@ class MainWindow(QWidget):
                 item.set_data(n)  # Store the data.
                 drag.add_item(item)
             
-            print(ROUTINE_MODULES)
+            return ROUTINE_MODULES
             
+        
         tw_submit.clicked.connect(lambda: refresh_sandbox('submit'))
 
         activate_vacuum = QPushButton("Vacuum")
