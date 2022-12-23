@@ -101,17 +101,20 @@ class MainWindow(QWidget):
             elif button_type == 'kill':
                 ROUTINE_MODULES = []
             elif button_type == 'blowoff':
-                ROUTINE_MODULES.append('blowoff')
+                ROUTINE_MODULES.append('Blowoff')
             elif button_type == 'pressure':
-                ROUTINE_MODULES.append('pressure')
+                ROUTINE_MODULES.append('Vacuum 1')
             elif button_type == 'delay':
-                ROUTINE_MODULES = []
+                ROUTINE_MODULES.append('Delay 5')
             
             
             for n, l in enumerate(ROUTINE_MODULES):
                 item = DragItem(l)
                 item.set_data(n)  # Store the data.
                 drag.add_item(item)
+            
+            print(ROUTINE_MODULES)
+            
         tw_submit.clicked.connect(lambda: refresh_sandbox('submit'))
 
         activate_vacuum = QPushButton("Vacuum")
