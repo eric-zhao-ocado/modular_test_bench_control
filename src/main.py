@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import *
 
 from resources.styles import *
 
+
 """
 Automated gripper testing routine.
 """
@@ -25,6 +26,7 @@ import sure_servo_2_control as sv2_ctrl
 import sure_servo_2_constants as sv2_cnst
 import yaskawa_vfd_control as vfd_ctrl
 import test_bench_constants as tb_cnst
+
 
 class MainWindow(QWidget):
     def __init__(
@@ -52,12 +54,14 @@ class MainWindow(QWidget):
     ):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setWindowTitle("Induct Testbench Control  (v1.0.0-alpha)")
-        self.setGeometry(0, 0, 1500, 800)
+        self.setGeometry(0, 0, 1300, 800)
         
         # design 
         title=QFont()
         title.setBold(True)
         title.setPixelSize(16)
+
+        ROUTINE_MODULES = []
     
         unbold=QFont()
         unbold.setBold(False)
@@ -73,28 +77,49 @@ class MainWindow(QWidget):
         tw.setHeaderLabels(["Name", "Waypoint", "Acceleration", "Velocity"])
         tw.setStyleSheet(TREE)
         
-        ### TEST ###
-        l1 = QTreeWidgetItem([ "String A",  "String B",  "String C" ])
-        l2 = QTreeWidgetItem([ "String AA", "String BB", "String CC" ])
-
         sandbox_tree = QTreeWidget()
         sandbox_tree.setColumnCount(1)
+        sandbox_tree.setHeaderLabel("Sandbox")
         sandbox_tree.setStyleSheet(TREE)
 
-        tw = QTreeWidget()
-        tw.resize(500,200)
-        tw.setColumnCount(3)
-        tw.setHeaderLabels(["Column 1", "Column 2", "Column 3"])
-        tw.addTopLevelItem(l1)
-        tw.addTopLevelItem(l2)
-        tw.setStyleSheet(TREE)
-        ### TEST ###
+        tw_submit = QPushButton("Select")
+        tw_submit.setStyleSheet(FORWARD_BUTTON)
 
-        ### super test ###
-    
-        ### super test ###
-        # sliders
-        
+        def add_routine():
+            for ix in tw.selectedIndexes():
+                text = ix.data(Qt.DisplayRole) # or ix.data()
+                ROUTINE_MODULES.append(str(text))
+
+            # for n, l in enumerate(ROUTINE_MODULES):
+            #     item = DragItem(l)
+            #     item.set_data(n)  # Store the data.
+            #     row = QTreeWidgetItem(item)
+            #     sandbox_tree.addTopLevelItem(row)
+
+        tw_submit.clicked.connect(add_routine)
+
+        activate_vacuum = QPushButton("Vacuum")
+        activate_vacuum.setStyleSheet(BASIC_BUTTON)
+
+        deactivate_vacuum = QPushButton("Blow off")
+        deactivate_vacuum.setStyleSheet(BASIC_BUTTON)
+
+        delay = QPushButton("Delay")
+        delay.setStyleSheet(BASIC_BUTTON)
+
+        run = QPushButton("Run")
+        run.setStyleSheet(FORWARD_BUTTON)
+        run_value = QLineEdit()
+        run_value.setStyleSheet(LINE_EDIT)
+
+        stop = QPushButton("KILL")
+        stop.setStyleSheet(BACKWARD_BUTTON)
+
+        def clear_routine():
+            ROUTINE_MODULES.clear()
+
+        stop.clicked.connect(clear_routine)
+
         # design 
         title=QFont()
         title.setBold(True)
@@ -110,15 +135,6 @@ class MainWindow(QWidget):
         onlyInt.setBottom(0)
         
         # Waypoint Bank
-        tw_label = QLabel("Waypoints Bank")
-        tw_label.setFont(unbold)
-        
-        sandbox_label = QLabel("Sandbox")
-        sandbox_label.setFont(unbold)
-
-        
-        
-        
         waypoint_tree = QRadioButton("RadioButton 1")
 
         # Bank Controls
@@ -133,7 +149,7 @@ class MainWindow(QWidget):
         accel_dial.setStyleSheet(DIAL)
         accel_dial.setMinimum(1)
         accel_dial.setMaximum(100)
-        accel_dial.setValue(0)
+        accel_dial.setValue(70)
         accel_dial.setNotchesVisible(False)
     
         accel_label = QLabel("acceleration")
@@ -148,7 +164,7 @@ class MainWindow(QWidget):
         velocity_dial.setStyleSheet(DIAL)
         velocity_dial.setMinimum(1)
         velocity_dial.setMaximum(100)
-        velocity_dial.setValue(0)
+        velocity_dial.setValue(70)
         velocity_dial.setNotchesVisible(False)
     
     
@@ -598,16 +614,25 @@ class MainWindow(QWidget):
         conveyor_controls.setLayout(conveyor)
 
         bank = QVBoxLayout()
-        bank.addWidget(tw_label)
         bank.addWidget(tw)
+        bank.addWidget(tw_submit)
         # bank.addWidget(tw2)
 
         sandbox = QVBoxLayout()
-        sandbox.addWidget(sandbox_label)
         sandbox.addWidget(sandbox_tree)
 
+
+        finite_runs = QHBoxLayout()
+        finite_runs.addWidget(run, stretch=2)
+        finite_runs.addWidget(run_value, stretch=0)
+
         bank_controls = QVBoxLayout()
-        bank_controls.addWidget(waypoint_controls)
+        bank_controls.addWidget(activate_vacuum)
+        bank_controls.addWidget(deactivate_vacuum)
+        bank_controls.addWidget(delay)
+        bank_controls.addLayout(finite_runs)
+        bank_controls.addWidget(stop)
+
 
 
         tr = QHBoxLayout()
@@ -626,20 +651,11 @@ class MainWindow(QWidget):
         bottom_row.addLayout(dynamic_conveyor, stretch=3)
         bottom_row.addItem(micro_horizontalSpacer)
         bottom_row.addLayout(static_calibrate, stretch=2)
-        
 
-        lhs = QVBoxLayout()
-        lhs.addWidget(top_row)
-        lhs.addItem(verticalSpacer)
-        lhs.addLayout(bottom_row)
-
-        rhs = QVBoxLayout()
-        rhs.addWidget(placeholder)
-        rhs.addWidget(placeholder)
-
-        main_layout = QHBoxLayout()
-        main_layout.addLayout(lhs, stretch=2)
-        main_layout.addLayout(rhs, stretch=1)
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(top_row)
+        main_layout.addItem(verticalSpacer)
+        main_layout.addLayout(bottom_row)
 
         self.setLayout(main_layout)
 
