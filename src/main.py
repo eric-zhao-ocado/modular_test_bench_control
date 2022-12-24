@@ -129,10 +129,11 @@ class MainWindow(QWidget):
                     format_list.append(text)
                 if len(format_list) > 0:
                     split_text = format_list[0].split(' ')
-                    split_coords = split_text[1].replace("(",'').replace(")",'').split(',')
-                    velocity_dial.setValue(int(split_text[2]))
-                    accel_dial.setValue(int(split_text[3]))
-                    joint_limits(split_coords[0], split_coords[1], split_coords[2])
+                    if len(split_text) > 2:
+                        split_coords = split_text[1].replace("(",'').replace(")",'').split(',')
+                        velocity_dial.setValue(int(split_text[2]))
+                        accel_dial.setValue(int(split_text[3]))
+                        joint_limits(split_coords[0], split_coords[1], split_coords[2])
             elif button_type == 'undo':
                 if len(ROUTINE_MODULES) > 0:
                     ROUTINE_MODULES.pop()
